@@ -13,7 +13,6 @@ import java.util.logging.Logger;
 import org.aksw.fox.binding.java.FoxParameter;
 import org.aksw.fox.binding.java.FoxResponse;
 import org.aksw.fox.binding.java.IFoxApi;
-import org.apache.jena.atlas.json.io.parserjavacc.javacc.JSON_Parser;
 import org.aksw.fox.binding.java.FoxApi;
 
 import dao.TweetDAO;
