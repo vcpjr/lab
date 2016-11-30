@@ -1,5 +1,9 @@
 package dao;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import entity.Tweet;
@@ -37,10 +41,31 @@ public class TweetDAO {
 	}
 
 	public ArrayList<Tweet> getRandomList(int size) {
-
+		// TODO como usar o size para uma lista randomica?
 		ArrayList<Tweet> tweets = new ArrayList<>();
-		for (int i = 0; i < size; i++) {
-			tweets.add(this.getRandomTweet());
+		// TODO conectar aos datasets de tweets
+		String path = "/Users/vilmar-macbook-air/git/lab/datasets/dataset_Fabio_Bif.txt";
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(path));
+			StringBuilder sb = new StringBuilder();
+			String line = br.readLine();
+
+			while (line != null) {
+				sb.append(line);
+				sb.append(System.lineSeparator());
+				line = br.readLine();
+
+				Tweet t = new Tweet();
+				t.setMessage(line);
+
+				tweets.add(t);
+				// System.out.println(line);
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 
 		return tweets;

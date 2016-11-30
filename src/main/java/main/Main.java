@@ -1,19 +1,20 @@
 package main;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.aksw.fox.binding.java.FoxApi;
 import org.aksw.fox.binding.java.FoxParameter;
 import org.aksw.fox.binding.java.FoxResponse;
 import org.aksw.fox.binding.java.IFoxApi;
-import org.aksw.fox.binding.java.FoxApi;
 
 import dao.TweetDAO;
 import entity.Tweet;
@@ -28,38 +29,91 @@ public class Main {
 		logger = Logger.getLogger("LabLOG");
 
 		logger.log(Level.INFO, "Iniciando o Lab");
-//		FoxResponse foxResp = getFoxResponse();
-//
-//		System.out.println(foxResp.getInput());
-//		System.out.println(foxResp.getOutput());
-//		System.out.println(foxResp.getLog());
-		
-		
-		// TODO chamar spotlight
 
-		getSpotlightResponse();
+		// logger.log(Level.INFO, "Running FOX");
+		//
+		int size = 1;
+		List<Tweet> tweets = tweetDAO.getRandomList(size);
+		//
+		String path = "/Users/vilmar-macbook-air/git/lab/datasets/outputFOX_dataset_Fabio_Bif.txt";
+		FileWriter fw = null;
+		// try {
+		// fw = new FileWriter(path);
+		// for (Tweet t : tweets) {
+		// FoxResponse foxResp = getFoxResponse(t.getMessage());
+		//
+		// fw.write(foxResp.getOutput());
+		// System.out.println(foxResp.getInput());
+		// // System.out.println(foxResp.getOutput());
+		// System.out.println(foxResp.getLog());
+		//
+		// }
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// } finally {
+		// try {
+		// fw.close();
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
+		// }
+		//
+		// logger.log(Level.INFO, "End FOX");
+
+		logger.log(Level.INFO, "Running Spotlight");
+
+		path = "/Users/vilmar-macbook-air/git/lab/datasets/outputSpotlight_dataset_Fabio_Bif.txt";
+		fw = null;
+		try {
+			fw = new FileWriter(path);
+			for (Tweet t : tweets) {
+				String spotlightResp = getSpotlightResponse(t.getMessage());
+
+				fw.write(spotlightResp);
+
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				fw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
 	}
 
-	private static void getSpotlightResponse() {
-		try {
+	private static String getSpotlightResponse(String text) {
 
-			String texto = getTexto();
-			URL url = new URL("http://spotlight.dbpedia.org/rest/annotate?text=" + texto);
+		String output = "";
+
+		try {
+			// TODO verificar os parâmetros
+			// (idioma PT)
+			// nível de confiança (0.1)
+
+			// TESTES
+			// URL url = new
+			// URL("http://spotlight.sztaki.hu:2228/rest/annotate?text=" +
+			// text);
+
+			URL url = new URL("http://spotlight.dbpedia.org/rest/annotate?text=" + text);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Accept", "application/json");
 
 			if (conn.getResponseCode() != 200) {
-				throw new RuntimeException("Failed : HTTP error code : "+ conn.getResponseCode());
+				throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
 			}
 
 			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 
-			String output;
 			System.out.println("Output from Server .... \n");
-			while ((output = br.readLine()) != null) {
-				System.out.println(output);
+			while (br.ready()) {
+				output += br.readLine();
 			}
+			System.out.println(output);
 			conn.disconnect();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
@@ -67,35 +121,28 @@ public class Main {
 			e.printStackTrace();
 		}
 
+		return output;
+
 	}
 
-	private static FoxResponse getFoxResponse() {
+	private static FoxResponse getFoxResponse(String text) {
 
 		IFoxApi fox = new FoxApi();
 
-		//URL api = new URL("http://0.0.0.0:4444/api");
-		//fox.setApiURL(api);
+		// URL api = new URL("http://0.0.0.0:4444/api");
+		// fox.setApiURL(api);
 
 		fox.setTask(FoxParameter.TASK.NER);
 		fox.setOutputFormat(FoxParameter.OUTPUT.RDFXML);
 		fox.setLang(FoxParameter.LANG.EN); // Opcoes: EN, ES, DE, FR, NL
 
 		// Variar as entradas
-		fox.setInput(getTexto());
+		fox.setInput(text);
 		// fox.setLightVersion(FoxParameter.FOXLIGHT.ENStanford);
 
-		FoxResponse response = fox.send();		
-
+		FoxResponse response = fox.send();
 
 		return response;
-	}
-
-	private static String getTexto() {
-		// TODO conectar aos datasets de tweets
-		int size = 20;
-		ArrayList<Tweet> tweets = tweetDAO.getRandomList(size);
-
-		return "The philosopher and mathematician Leibniz was born in Leipzig"; //TODO teste
 	}
 
 }
