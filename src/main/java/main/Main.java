@@ -11,11 +11,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.aksw.fox.binding.java.FoxApi;
-import org.aksw.fox.binding.java.FoxParameter;
-import org.aksw.fox.binding.java.FoxResponse;
-import org.aksw.fox.binding.java.IFoxApi;
-
 import dao.TweetDAO;
 import entity.Tweet;
 
@@ -98,7 +93,7 @@ public class Main {
 			// URL("http://spotlight.sztaki.hu:2228/rest/annotate?text=" +
 			// text);
 
-			URL url = new URL("http://spotlight.dbpedia.org/rest/annotate?text=" + text);
+			URL url = new URL(" http://spotlight.sztaki.hu:2228/rest/annotate?text=" + text);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Accept", "application/json");
@@ -125,24 +120,24 @@ public class Main {
 
 	}
 
-	private static FoxResponse getFoxResponse(String text) {
-
-		IFoxApi fox = new FoxApi();
-
-		// URL api = new URL("http://0.0.0.0:4444/api");
-		// fox.setApiURL(api);
-
-		fox.setTask(FoxParameter.TASK.NER);
-		fox.setOutputFormat(FoxParameter.OUTPUT.RDFXML);
-		fox.setLang(FoxParameter.LANG.EN); // Opcoes: EN, ES, DE, FR, NL
-
-		// Variar as entradas
-		fox.setInput(text);
-		// fox.setLightVersion(FoxParameter.FOXLIGHT.ENStanford);
-
-		FoxResponse response = fox.send();
-
-		return response;
-	}
+	// private static FoxResponse getFoxResponse(String text) {
+	//
+	// IFoxApi fox = new FoxApi();
+	//
+	// // URL api = new URL("http://0.0.0.0:4444/api");
+	// // fox.setApiURL(api);
+	//
+	// fox.setTask(FoxParameter.TASK.NER);
+	// fox.setOutputFormat(FoxParameter.OUTPUT.RDFXML);
+	// fox.setLang(FoxParameter.LANG.EN); // Opcoes: EN, ES, DE, FR, NL
+	//
+	// // Variar as entradas
+	// fox.setInput(text);
+	// // fox.setLightVersion(FoxParameter.FOXLIGHT.ENStanford);
+	//
+	// FoxResponse response = fox.send();
+	//
+	// return response;
+	// }
 
 }
