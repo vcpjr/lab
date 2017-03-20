@@ -44,7 +44,7 @@ public class TweetDAO {
 		// TODO como usar o size para uma lista randomica?
 		ArrayList<Tweet> tweets = new ArrayList<>();
 		// TODO conectar aos datasets de tweets
-		String path = "/Users/vilmar-macbook-air/git/lab/datasets/dataset_Fabio_Bif.txt";
+		String path = "/Users/ggoes/Dropbox/Datasets/dataset_Fabio_Bif.txt";
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(path));

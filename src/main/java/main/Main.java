@@ -30,7 +30,7 @@ public class Main {
 		int size = 1;
 		List<Tweet> tweets = tweetDAO.getRandomList(size);
 		//
-		String path = "/Users/vilmar-macbook-air/git/lab/datasets/outputFOX_dataset_Fabio_Bif.txt";
+		String path = "/Users/ggoes/Dropbox/Datasets/outputFOX_dataset_Fabio_Bif.txt";
 		FileWriter fw = null;
 		// try {
 		// fw = new FileWriter(path);
@@ -57,7 +57,7 @@ public class Main {
 
 		logger.log(Level.INFO, "Running Spotlight");
 
-		path = "/Users/vilmar-macbook-air/git/lab/datasets/outputSpotlight_dataset_Fabio_Bif.txt";
+		path = "/Users/ggoes/Dropbox/Datasets/outputSpotlight_dataset_Fabio_Bif.txt";
 		fw = null;
 		try {
 			fw = new FileWriter(path);
