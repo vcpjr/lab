@@ -18,6 +18,8 @@ public class Main {
 
 	private static Logger logger;
 	private static TweetDAO tweetDAO = new TweetDAO();
+	private static String[] languages = { "en", "pt" };
+	private static double[] confidences = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
 
 	public static void main(String[] args) {
 
@@ -30,8 +32,9 @@ public class Main {
 		int size = 1;
 		List<Tweet> tweets = tweetDAO.getRandomList(size);
 		//
-		String path = "/Users/ggoes/Dropbox/Datasets/outputFOX_dataset_Fabio_Bif.txt";
-		FileWriter fw = null;
+		// String path =
+		// "/Users/ggoes/Dropbox/Datasets/outputFOX_dataset_Fabio_Bif.txt";
+		// FileWriter fw = null;
 		// try {
 		// fw = new FileWriter(path);
 		// for (Tweet t : tweets) {
@@ -55,51 +58,54 @@ public class Main {
 		//
 		// logger.log(Level.INFO, "End FOX");
 
-		logger.log(Level.INFO, "Running Spotlight");
+		for (int i = 0; i < languages.length; i++) {
+			String language = languages[i];
+			for (int k = 0; k < confidences.length; k++) {
+				double confidence = 0.1;
 
-		path = "/Users/ggoes/Dropbox/Datasets/outputSpotlight_dataset_Fabio_Bif.txt";
-		fw = null;
-		try {
-			fw = new FileWriter(path);
-			for (Tweet t : tweets) {
-				String spotlightResp = getSpotlightResponse(t.getMessage());
+				logger.log(Level.INFO, "Running Spotlight: lang=" + language + ". confidence=" + confidence);
 
-				fw.write(spotlightResp);
+				String path = "/Users/ggoes/Dropbox/Datasets/outputSpotlight_dataset_Fabio_Bif_lang=" + language
+						+ "_confidence=" + confidence + ".txt";
+				FileWriter fw = null;
+				try {
+					fw = new FileWriter(path);
+					for (Tweet t : tweets) {
+						String spotlightResp = getSpotlightResponse(t.getMessage(), confidence, language);
+						fw.write(spotlightResp + "\n");
 
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				fw.close();
-			} catch (IOException e) {
-				e.printStackTrace();
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+					try {
+						fw.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
 			}
 		}
 
 	}
 
-	private static String getSpotlightResponse(String text) {
+	private static String getSpotlightResponse(String text, double confidence, String language) {
 
 		String output = "";
+		logger.log(Level.INFO, "Spotting text: " + text);
 
+		text = text.replace(' ', '+');
 		try {
-			// TODO verificar os parâmetros
-			// (idioma PT)
-			// nível de confiança (0.1)
+			URL url = new URL("http://model.dbpedia-spotlight.org/" + language + "/annotate?confidence=" + confidence
+					+ "&text=" + text);
 
-			// TESTES
-			// URL url = new
-			// URL("http://spotlight.sztaki.hu:2228/rest/annotate?text=" +
-			// text);
-
-			URL url = new URL(" http://spotlight.sztaki.hu:2228/rest/annotate?text=" + text);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Accept", "application/json");
 
 			if (conn.getResponseCode() != 200) {
-				throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
+				throw new RuntimeException(
+						"Failed : HTTP error code : " + conn.getResponseCode() + ": " + conn.getResponseMessage());
 			}
 
 			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
