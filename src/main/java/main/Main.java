@@ -1,6 +1,10 @@
 package main;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -16,6 +20,9 @@ import entity.Tweet;
 
 public class Main {
 
+	private static String PATH_DROPBOX_GGOES = "/Users/ggoes/Dropbox/Datasets/";
+	private static String PATH_DROPBOX_VILMAR = "/Users/ggoes/Dropbox/Datasets/";
+	private static String PATH_DROPBOX_TJ = "C:\\Users\\Vilmar\\Dropbox\\Dropbox\\Datasets\\";
 	private static Logger logger;
 	private static TweetDAO tweetDAO = new TweetDAO();
 	private static String[] languages = { "en", "pt" };
@@ -27,11 +34,46 @@ public class Main {
 
 		logger.log(Level.INFO, "Iniciando o Lab");
 
+		// callFox();
+		callSpotlight();
+
+		countMentions();
+	}
+
+	private static void countMentions() {
+
+		File inputFile = new File(PATH_DROPBOX_TJ + "outputSpotlight_dataset_Fabio_Bif_lang=en_confidence=0.1.txt");
+		File outputFile = new File(PATH_DROPBOX_TJ + "countSpotlight_dataset_Fabio_Bif_lang=en_confidence=0.1.txt");
+
+		FileReader fr;
+		try {
+			fr = new FileReader(inputFile);
+			BufferedReader br = new BufferedReader(fr);
+			FileWriter fw = new FileWriter(outputFile, true);
+			BufferedWriter bw = new BufferedWriter(fw);
+
+			while (br.ready()) {
+				String line = br.readLine();
+
+				countLine(line, bw);
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void countLine(String line, BufferedWriter bw) {
+
+		// TODO tratar a linha da menção encontrada
+		// TODO usar biblioteca de JSON??
+
+	}
+
+	private static void callFox() {
 		// logger.log(Level.INFO, "Running FOX");
-		//
-		int size = 1;
-		List<Tweet> tweets = tweetDAO.getRandomList(size);
-		//
 		// String path =
 		// "/Users/ggoes/Dropbox/Datasets/outputFOX_dataset_Fabio_Bif.txt";
 		// FileWriter fw = null;
@@ -57,6 +99,12 @@ public class Main {
 		// }
 		//
 		// logger.log(Level.INFO, "End FOX");
+	}
+
+	private static void callSpotlight() {
+
+		int size = 1;
+		List<Tweet> tweets = tweetDAO.getRandomList(size);
 
 		for (int i = 0; i < languages.length; i++) {
 			String language = languages[i];
@@ -65,8 +113,8 @@ public class Main {
 
 				logger.log(Level.INFO, "Running Spotlight: lang=" + language + ". confidence=" + confidence);
 
-				String path = "/Users/ggoes/Dropbox/Datasets/outputSpotlight_dataset_Fabio_Bif_lang=" + language
-						+ "_confidence=" + confidence + ".txt";
+				String path = PATH_DROPBOX_TJ + "outputSpotlight_dataset_Fabio_Bif_lang=" + language + "_confidence="
+						+ confidence + ".txt";
 				FileWriter fw = null;
 				try {
 					fw = new FileWriter(path);
@@ -86,7 +134,6 @@ public class Main {
 				}
 			}
 		}
-
 	}
 
 	private static String getSpotlightResponse(String text, double confidence, String language) {
