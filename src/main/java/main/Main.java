@@ -20,10 +20,11 @@ import entity.Tweet;
 
 public class Main {
 
-	private static String PATH_DROPBOX_GGOES = "/Users/ggoes/Dropbox/Datasets/";
-	private static String PATH_DROPBOX_VILMAR = "/Users/ggoes/Dropbox/Datasets/";
-	private static String PATH_DROPBOX_TJ = "C:\\Users\\Vilmar\\Dropbox\\Dropbox\\Datasets\\";
+	public static String PATH_DROPBOX_GGOES = "/Users/ggoes/Dropbox/Datasets/";
+	public static String PATH_DROPBOX_VILMAR = "/Users/ggoes/Dropbox/Datasets/";
+	public static String PATH_DROPBOX_TJ = "C:\\Users\\Vilmar\\Dropbox\\Datasets\\";
 	private static Logger logger;
+
 	private static TweetDAO tweetDAO = new TweetDAO();
 	private static String[] languages = { "en", "pt" };
 	private static double[] confidences = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
@@ -68,7 +69,26 @@ public class Main {
 	private static void countLine(String line, BufferedWriter bw) {
 
 		// TODO tratar a linha da menção encontrada
+		String[] s = line.split("Resources:");
+
+		int mentions = 0;
+		int count = 0;
+		try {
+			bw.write(count + ": ");
+			if (s != null && s.length > 2) {
+				s = s[1].split("@URI");
+				mentions = s.length;
+				bw.write("mentions: " + mentions);
+			}
+
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		// TODO usar biblioteca de JSON??
+		// Gson parser = new Gson();
+		// parser.fromJson(line, Resource);
 
 	}
 
@@ -113,7 +133,7 @@ public class Main {
 
 				logger.log(Level.INFO, "Running Spotlight: lang=" + language + ". confidence=" + confidence);
 
-				String path = PATH_DROPBOX_TJ + "outputSpotlight_dataset_Fabio_Bif_lang=" + language + "_confidence="
+				String path = PATH_DROPBOX_TJ + "outputSpotlight_dataset_Fabio_Bif_2_lang=" + language + "_confidence="
 						+ confidence + ".txt";
 				FileWriter fw = null;
 				try {

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 import entity.Tweet;
 import entity.filter.TweetFilter;
+import main.Main;
 
 public class TweetDAO {
 
@@ -44,7 +45,8 @@ public class TweetDAO {
 		// TODO como usar o size para uma lista randomica?
 		ArrayList<Tweet> tweets = new ArrayList<>();
 		// TODO conectar aos datasets de tweets
-		String path = "/Users/ggoes/Dropbox/Datasets/dataset_Fabio_Bif.txt";
+
+		String path = Main.PATH_DROPBOX_TJ + "dataset_Fabio_Bif.txt";
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(path));
