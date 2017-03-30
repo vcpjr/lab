@@ -44,7 +44,6 @@ public class TweetDAO {
 	public ArrayList<Tweet> getRandomList(int size) {
 		// TODO como usar o size para uma lista randomica?
 		ArrayList<Tweet> tweets = new ArrayList<>();
-		// TODO conectar aos datasets de tweets
 
 		String path = Main.PATH_DROPBOX_TJ + "dataset_Fabio_Bif.txt";
 		BufferedReader br = null;

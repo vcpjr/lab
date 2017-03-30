@@ -22,12 +22,11 @@ public class Main {
 
 	public static String PATH_DROPBOX_GGOES = "/Users/ggoes/Dropbox/Datasets/";
 	public static String PATH_DROPBOX_VILMAR = "/Users/ggoes/Dropbox/Datasets/";
-	public static String PATH_DROPBOX_TJ = "C:\\Users\\Vilmar\\Dropbox\\Datasets\\";
+	public static String PATH_DROPBOX_TJ = "C:\\Users\\Vilmar\\Dropbox\\Datasets (Vilmar)\\";
 	private static Logger logger;
 
 	private static TweetDAO tweetDAO = new TweetDAO();
 	private static String[] languages = { "en", "pt" };
-	private static double[] confidences = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
 
 	public static void main(String[] args) {
 
@@ -43,26 +42,30 @@ public class Main {
 
 	private static void countMentions() {
 
-		File inputFile = new File(PATH_DROPBOX_TJ + "outputSpotlight_dataset_Fabio_Bif_lang=en_confidence=0.1.txt");
-		File outputFile = new File(PATH_DROPBOX_TJ + "countSpotlight_dataset_Fabio_Bif_lang=en_confidence=0.1.txt");
+		for (double confidence = 0.05; confidence <= 1.0; confidence += 0.05) {
+			File inputFile = new File(
+					PATH_DROPBOX_TJ + "outputSpotlight_dataset_Fabio_Bif_lang=en_confidence=" + confidence + ".txt");
+			File outputFile = new File(
+					PATH_DROPBOX_TJ + "countSpotlight_dataset_Fabio_Bif_lang=en_confidence=" + confidence + ".txt");
 
-		FileReader fr;
-		try {
-			fr = new FileReader(inputFile);
-			BufferedReader br = new BufferedReader(fr);
-			FileWriter fw = new FileWriter(outputFile, true);
-			BufferedWriter bw = new BufferedWriter(fw);
+			FileReader fr;
+			try {
+				fr = new FileReader(inputFile);
+				BufferedReader br = new BufferedReader(fr);
+				FileWriter fw = new FileWriter(outputFile, true);
+				BufferedWriter bw = new BufferedWriter(fw);
 
-			while (br.ready()) {
-				String line = br.readLine();
+				while (br.ready()) {
+					String line = br.readLine();
 
-				countLine(line, bw);
+					countLine(line, bw);
+				}
+
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -128,8 +131,7 @@ public class Main {
 
 		for (int i = 0; i < languages.length; i++) {
 			String language = languages[i];
-			for (int k = 0; k < confidences.length; k++) {
-				double confidence = 0.1;
+			for (double confidence = 0.05; confidence <= 1.0; confidence += 0.05) {
 
 				logger.log(Level.INFO, "Running Spotlight: lang=" + language + ". confidence=" + confidence);
 
