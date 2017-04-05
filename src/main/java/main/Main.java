@@ -20,8 +20,8 @@ import entity.Tweet;
 
 public class Main {
 
-	public static String PATH_DROPBOX_GGOES = "/Users/ggoes/Dropbox/Datasets/";
-	public static String PATH_DROPBOX_VILMAR = "/Users/ggoes/Dropbox/Datasets/";
+	public static String PATH_DROPBOX_GGOES = "/Users/ggoes/Dropbox/Datasets (Vilmar)/";
+	public static String PATH_DROPBOX_VILMAR = "/Users/ggoes/Dropbox/Datasets (Vilmar)/";
 	public static String PATH_DROPBOX_TJ = "C:\\Users\\Vilmar\\Dropbox\\Datasets (Vilmar)\\";
 	private static Logger logger;
 
@@ -46,7 +46,7 @@ public class Main {
 			File inputFile = new File(
 					PATH_DROPBOX_TJ + "outputSpotlight_dataset_Fabio_Bif_lang=en_confidence=" + confidence + ".txt");
 			File outputFile = new File(
-					PATH_DROPBOX_TJ + "countSpotlight_dataset_Fabio_Bif_lang=en_confidence=" + confidence + ".txt");
+					PATH_DROPBOX_TJ + "countSpotlight_dataset_Fabio_Bif_lang=en_confidence=" + confidence + ".csv");
 
 			FileReader fr;
 			try {
@@ -55,10 +55,12 @@ public class Main {
 				FileWriter fw = new FileWriter(outputFile, true);
 				BufferedWriter bw = new BufferedWriter(fw);
 
+				bw.write("#;Tweet;N. Annotations; \n");
+				int count = 1;
 				while (br.ready()) {
 					String line = br.readLine();
 
-					countLine(line, bw);
+					countLine(line, bw, count++);
 				}
 
 			} catch (FileNotFoundException e) {
@@ -69,22 +71,26 @@ public class Main {
 		}
 	}
 
-	private static void countLine(String line, BufferedWriter bw) {
+	private static void countLine(String line, BufferedWriter bw, int count) {
 
 		// TODO tratar a linha da menção encontrada
-		String[] s = line.split("Resources:");
+		String auxLine = line;
+		String[] s = line.split("@text");
 
-		int mentions = 0;
-		int count = 0;
 		try {
-			bw.write(count + ": ");
-			if (s != null && s.length > 2) {
-				s = s[1].split("@URI");
-				mentions = s.length;
-				bw.write("mentions: " + mentions);
+			bw.write(count + ";");
+			if (s != null && s.length > 1) {
+				s = s[1].split(",");
+				String text = s[0];
+
+				int nAnnotations = (auxLine.length() - auxLine.replaceAll("@URI", "").length()) / "@URI".length();
+				// TODO
+				// s = split("")
+				// String classes;
+
+				bw.write(text + ";" + nAnnotations + "; \n");// + classes);
 			}
 
-			bw.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -131,11 +137,13 @@ public class Main {
 
 		for (int i = 0; i < languages.length; i++) {
 			String language = languages[i];
+			// for (double confidence = 0.05; confidence <= 1.0; confidence +=
+			// 0.05) {
 			for (double confidence = 0.05; confidence <= 1.0; confidence += 0.05) {
 
 				logger.log(Level.INFO, "Running Spotlight: lang=" + language + ". confidence=" + confidence);
 
-				String path = PATH_DROPBOX_TJ + "outputSpotlight_dataset_Fabio_Bif_2_lang=" + language + "_confidence="
+				String path = PATH_DROPBOX_TJ + "outputSpotlight_dataset_Fabio_Bif_lang=" + language + "_confidence="
 						+ confidence + ".txt";
 				FileWriter fw = null;
 				try {
@@ -156,12 +164,13 @@ public class Main {
 				}
 			}
 		}
+
 	}
 
 	private static String getSpotlightResponse(String text, double confidence, String language) {
 
 		String output = "";
-		logger.log(Level.INFO, "Spotting text: " + text);
+		// logger.log(Level.INFO, "Spotting text: " + text);
 
 		text = text.replace(' ', '+');
 		try {
@@ -179,7 +188,7 @@ public class Main {
 
 			BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 
-			System.out.println("Output from Server .... \n");
+			// System.out.println("Output from Server .... \n");
 			while (br.ready()) {
 				output += br.readLine();
 			}
