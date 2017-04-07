@@ -26,7 +26,7 @@ public class Main {
 	private static Logger logger;
 
 	private static TweetDAO tweetDAO = new TweetDAO();
-	private static String[] languages = { "en", "pt" };
+	private static String[] languages = { "pt", "en" };
 
 	public static void main(String[] args) {
 
@@ -42,31 +42,37 @@ public class Main {
 
 	private static void countMentions() {
 
-		for (double confidence = 0.05; confidence <= 1.0; confidence += 0.05) {
-			File inputFile = new File(
-					PATH_DROPBOX_TJ + "outputSpotlight_dataset_Fabio_Bif_lang=en_confidence=" + confidence + ".txt");
-			File outputFile = new File(
-					PATH_DROPBOX_TJ + "countSpotlight_dataset_Fabio_Bif_lang=en_confidence=" + confidence + ".csv");
+		for (int i = 0; i < languages.length; i++) {
+			String language = languages[i];
 
-			FileReader fr;
-			try {
-				fr = new FileReader(inputFile);
-				BufferedReader br = new BufferedReader(fr);
-				FileWriter fw = new FileWriter(outputFile, true);
-				BufferedWriter bw = new BufferedWriter(fw);
+			for (double confidence = 0.05; confidence <= 1.0; confidence += 0.05) {
+				File inputFile = new File(PATH_DROPBOX_TJ + "outputSpotlight_dataset_Fabio_Bif_lang=" + language
+						+ "_confidence=" + confidence + ".txt");
+				File outputFile = new File(PATH_DROPBOX_TJ + "countSpotlight_dataset_Fabio_Bif_lang=" + language
+						+ "en_confidence=" + confidence + ".csv");
 
-				bw.write("#;Tweet;N. Annotations; \n");
-				int count = 1;
-				while (br.ready()) {
-					String line = br.readLine();
+				FileReader fr;
+				try {
+					fr = new FileReader(inputFile);
+					BufferedReader br = new BufferedReader(fr);
+					FileWriter fw = new FileWriter(outputFile, true);
+					BufferedWriter bw = new BufferedWriter(fw);
 
-					countLine(line, bw, count++);
+					// TODO
+					bw.write(
+							"#;Num. Annotations; Num. Annotations e-Commerce; Num./Instance; Num. Classes; Time;Tweet \n");
+					int count = 1;
+					while (br.ready()) {
+						String line = br.readLine();
+
+						countLine(line, bw, count++);
+					}
+
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		}
 	}
@@ -139,7 +145,7 @@ public class Main {
 			String language = languages[i];
 			// for (double confidence = 0.05; confidence <= 1.0; confidence +=
 			// 0.05) {
-			for (double confidence = 0.05; confidence <= 1.0; confidence += 0.05) {
+			for (double confidence = 0.15; confidence <= 1.0; confidence += 0.05) {
 
 				logger.log(Level.INFO, "Running Spotlight: lang=" + language + ". confidence=" + confidence);
 
@@ -195,9 +201,9 @@ public class Main {
 			System.out.println(output);
 			conn.disconnect();
 		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			System.out.println(e.getMessage());
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println(e.getMessage());
 		}
 
 		return output;
