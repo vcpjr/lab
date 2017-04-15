@@ -1,28 +1,37 @@
 package adapter.dbpediaspotlight;
 
 import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
 import pojo.dbpediaspotlight.Annotation;
 import pojo.dbpediaspotlight.AnnotationResource;
 
 import java.lang.reflect.Type;
-import java.util.List;
+import java.util.ArrayList;
 
 public class AnnotationAdapter implements JsonDeserializer<Annotation> {
 
     @Override
     public Annotation deserialize(JsonElement json, Type type, JsonDeserializationContext context)
         throws JsonParseException {
-        JsonObject obj = json.getAsJsonObject();
-        Type listType = new TypeToken<List<AnnotationResource>>() {}.getType();
-        List<AnnotationResource> resources = new Gson().fromJson(obj.get("Resources"), listType);
 
-        String text = obj.get("@text").getAsString();
-        float confidence = obj.get("@confidence").getAsFloat();
-        int support = obj.get("@support").getAsInt();
-        String types = obj.get("@types").getAsString();
-        String sparql = obj.get("@sparql").getAsString();
-        String policy = obj.get("@policy").getAsString();
+        JsonObject obj = json.getAsJsonObject();
+
+        Gson gson = new GsonBuilder()
+            .registerTypeAdapter(AnnotationResource.class, new AnnotationResourceAdapter())
+            .create();
+
+        final JsonArray jsonResources = obj.getAsJsonArray("Resources");
+        final ArrayList<AnnotationResource> resources = new ArrayList<>();
+        for (JsonElement element : jsonResources) {
+            final AnnotationResource resource = gson.fromJson(element, AnnotationResource.class);
+            resources.add(resource);
+        }
+
+        final String text = obj.get("@text").getAsString();
+        final float confidence = obj.get("@confidence").getAsFloat();
+        final int support = obj.get("@support").getAsInt();
+        final String types = obj.get("@types").getAsString();
+        final String sparql = obj.get("@sparql").getAsString();
+        final String policy = obj.get("@policy").getAsString();
         return new Annotation(text, confidence, support, types, sparql, policy, resources);
     }
 }

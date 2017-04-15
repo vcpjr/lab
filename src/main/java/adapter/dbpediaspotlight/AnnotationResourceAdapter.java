@@ -15,13 +15,15 @@ public class AnnotationResourceAdapter implements JsonDeserializer<AnnotationRes
     public AnnotationResource deserialize(JsonElement json, Type type, JsonDeserializationContext context)
         throws JsonParseException {
 
-        JsonObject obj = json.getAsJsonObject();
-        Map<String, Set<String>> types = new HashMap<>();
+        final JsonObject obj = json.getAsJsonObject();
+        final Map<String, Set<String>> types = new HashMap<>();
 
         for (String typ : obj.get("@types").getAsString().split(",")) {
-            String[] keyValue = typ.split(":");
-            String key = keyValue[0];
-            String value = keyValue[1];
+            if (typ.isEmpty())
+                break;
+            final String[] keyValue = typ.split(":");
+            final String key = keyValue[0];
+            final String value = keyValue[1];
             if (types.containsKey(key))
                 types.get(key).add(value);
             else {
@@ -31,12 +33,12 @@ public class AnnotationResourceAdapter implements JsonDeserializer<AnnotationRes
             }
         }
 
-        String uri = obj.get("@URI").getAsString();
-        int support = obj.get("@support").getAsInt();
-        String surfaceForm = obj.get("@surfaceForm").getAsString();
-        int offset = obj.get("@offset").getAsInt();
-        double similarityScore = obj.get("@similarityScore").getAsDouble();
-        double percentageOfSecondRank = obj.get("@percentageOfSecondRank").getAsDouble();
+        final String uri = obj.get("@URI").getAsString();
+        final int support = obj.get("@support").getAsInt();
+        final String surfaceForm = obj.get("@surfaceForm").getAsString();
+        final int offset = obj.get("@offset").getAsInt();
+        final double similarityScore = obj.get("@similarityScore").getAsDouble();
+        final double percentageOfSecondRank = obj.get("@percentageOfSecondRank").getAsDouble();
 
         return new AnnotationResource(uri, support, types, surfaceForm,
             offset, similarityScore, percentageOfSecondRank);
