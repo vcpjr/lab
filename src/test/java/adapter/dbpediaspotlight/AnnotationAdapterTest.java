@@ -1,4 +1,4 @@
-package adapter;
+package adapter.dbpediaspotlight;
 
 import adapter.dbpediaspotlight.AnnotationAdapter;
 import com.google.gson.Gson;
