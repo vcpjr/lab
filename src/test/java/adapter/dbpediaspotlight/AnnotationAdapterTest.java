@@ -1,9 +1,7 @@
-package adapter;
+package adapter.dbpediaspotlight;
 
-import adapter.dbpediaspotlight.AnnotationAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import junit.framework.TestCase;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -12,8 +10,6 @@ import pojo.dbpediaspotlight.AnnotationResource;
 
 import java.util.List;
 import java.util.Locale;
-
-import static junit.framework.TestCase.assertEquals;
 
 public class AnnotationAdapterTest {
 
@@ -74,6 +70,7 @@ public class AnnotationAdapterTest {
     public void testDeserializeResources() {
         List<AnnotationResource> resources = annotation.getResources();
         Assert.assertEquals(2, resources.size());
+        Assert.assertTrue(resources.get(1).getTypes().isEmpty());
         Assert.assertEquals(expectedUri, resources.get(1).getURI());
     }
 }
