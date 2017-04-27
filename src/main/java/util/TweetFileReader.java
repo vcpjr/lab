@@ -29,8 +29,10 @@ public class TweetFileReader {
             }
         } catch (FileNotFoundException e) {
             LOG.error("File '" + filename + "' not found");
+            e.printStackTrace();
         } catch (IOException e) {
             LOG.error("Unknown Exception.");
+            e.printStackTrace();
         }
 
         LOG.info("Read file.");

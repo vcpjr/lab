@@ -1,40 +1,40 @@
 package main;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import dao.TweetDAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import pojo.Tweet;
+
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import dao.TweetDAO;
-import entity.Tweet;
 
 public class Main {
-
 	public static String PATH_DROPBOX_GGOES = "/Users/ggoes/Dropbox/Datasets (Vilmar)/";
+
 	public static String PATH_DROPBOX_VILMAR = "/Users/ggoes/Dropbox/Datasets (Vilmar)/";
 	public static String PATH_DROPBOX_TJ = "C:\\Users\\Vilmar\\Dropbox\\Datasets (Vilmar)\\";
-	private static Logger logger;
+
+	private static final Logger LOG = LoggerFactory.getLogger(Main.class);
 
 	private static TweetDAO tweetDAO = new TweetDAO();
 	private static String[] languages = { "pt", "en" };
 
 	public static void main(String[] args) {
 
-		logger = Logger.getLogger("LabLOG");
+	    LOG.info("Starting Application.");
+		String filePath = args[0];
+		File inputFile = new File(filePath);
 
-		logger.log(Level.INFO, "Iniciando o Lab");
+		if (!inputFile.exists()) {
+            LOG.error("File not found!");
+            System.err.println("File not found!");
+            System.exit(1);
+        }
 
-		// callFox();
+
 		callSpotlight();
 
 		countMentions();
@@ -90,9 +90,6 @@ public class Main {
 				String text = s[0];
 
 				int nAnnotations = (auxLine.length() - auxLine.replaceAll("@URI", "").length()) / "@URI".length();
-				// TODO
-				// s = split("")
-				// String classes;
 
 				bw.write(text + ";" + nAnnotations + "; \n");// + classes);
 			}
@@ -100,40 +97,6 @@ public class Main {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		// TODO usar biblioteca de JSON??
-		// Gson parser = new Gson();
-		// parser.fromJson(line, Resource);
-
-	}
-
-	private static void callFox() {
-		// logger.log(Level.INFO, "Running FOX");
-		// String path =
-		// "/Users/ggoes/Dropbox/Datasets/outputFOX_dataset_Fabio_Bif.txt";
-		// FileWriter fw = null;
-		// try {
-		// fw = new FileWriter(path);
-		// for (Tweet t : tweets) {
-		// FoxResponse foxResp = getFoxResponse(t.getMessage());
-		//
-		// fw.write(foxResp.getOutput());
-		// System.out.println(foxResp.getInput());
-		// // System.out.println(foxResp.getOutput());
-		// System.out.println(foxResp.getLog());
-		//
-		// }
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// } finally {
-		// try {
-		// fw.close();
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// }
-		// }
-		//
-		// logger.log(Level.INFO, "End FOX");
 	}
 
 	private static void callSpotlight() {
@@ -207,27 +170,5 @@ public class Main {
 		}
 
 		return output;
-
 	}
-
-	// private static FoxResponse getFoxResponse(String text) {
-	//
-	// IFoxApi fox = new FoxApi();
-	//
-	// // URL api = new URL("http://0.0.0.0:4444/api");
-	// // fox.setApiURL(api);
-	//
-	// fox.setTask(FoxParameter.TASK.NER);
-	// fox.setOutputFormat(FoxParameter.OUTPUT.RDFXML);
-	// fox.setLang(FoxParameter.LANG.EN); // Opcoes: EN, ES, DE, FR, NL
-	//
-	// // Variar as entradas
-	// fox.setInput(text);
-	// // fox.setLightVersion(FoxParameter.FOXLIGHT.ENStanford);
-	//
-	// FoxResponse response = fox.send();
-	//
-	// return response;
-	// }
-
 }

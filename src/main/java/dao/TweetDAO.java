@@ -6,8 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import entity.Tweet;
-import entity.filter.TweetFilter;
+import pojo.Tweet;
 import main.Main;
 
 public class TweetDAO {
@@ -36,11 +35,6 @@ public class TweetDAO {
 		return null;
 	}
 
-	public Tweet getTweetByFilter(TweetFilter filter) {
-		// TODO
-		return null;
-	}
-
 	public ArrayList<Tweet> getRandomList(int size) {
 		// TODO como usar o size para uma lista randomica?
 		ArrayList<Tweet> tweets = new ArrayList<>();
@@ -57,8 +51,7 @@ public class TweetDAO {
 				sb.append(System.lineSeparator());
 				line = br.readLine();
 
-				Tweet t = new Tweet();
-				t.setMessage(line);
+				Tweet t = new Tweet(line);
 
 				tweets.add(t);
 				// System.out.println(line);

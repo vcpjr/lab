@@ -18,6 +18,6 @@ public class TweetFileReaderTest {
         File resourceFile = new File(classLoader.getResource("test/DatasetTweets.txt").getFile());
 
         List<Tweet> tweets = TweetFileReader.readTweetsFromFile(resourceFile);
-        Assert.assertEquals(3, tweets.size());
+        Assert.assertEquals(8, tweets.size());
     }
 }
