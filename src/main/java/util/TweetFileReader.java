@@ -8,9 +8,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by robinho on 17/04/17.
- */
 public class TweetFileReader {
     private static final Logger LOG = LoggerFactory.getLogger(TweetFileReader.class);
 

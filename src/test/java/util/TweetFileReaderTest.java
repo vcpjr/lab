@@ -7,9 +7,6 @@ import pojo.Tweet;
 import java.io.File;
 import java.util.List;
 
-/**
- * Created by robinho on 18/04/17.
- */
 public class TweetFileReaderTest {
 
     @Test
