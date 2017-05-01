@@ -6,6 +6,7 @@ import pojo.dbpediaspotlight.AnnotationResource;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.List;
 
 public class AnnotationAdapter implements JsonDeserializer<Annotation> {
 
@@ -19,11 +20,13 @@ public class AnnotationAdapter implements JsonDeserializer<Annotation> {
             .registerTypeAdapter(AnnotationResource.class, new AnnotationResourceAdapter())
             .create();
 
-        final JsonArray jsonResources = obj.getAsJsonArray("Resources");
-        final ArrayList<AnnotationResource> resources = new ArrayList<>();
-        for (JsonElement element : jsonResources) {
-            final AnnotationResource resource = gson.fromJson(element, AnnotationResource.class);
-            resources.add(resource);
+        List<AnnotationResource> resources = new ArrayList<>();
+        if (obj.has("Resources")) {
+            final JsonArray jsonResources = obj.getAsJsonArray("Resources");
+            for (JsonElement element : jsonResources) {
+                final AnnotationResource resource = gson.fromJson(element, AnnotationResource.class);
+                resources.add(resource);
+            }
         }
 
         final String text = obj.get("@text").getAsString();
