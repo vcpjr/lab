@@ -9,7 +9,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Locale;
 
 public class SpotlightRest {
@@ -54,7 +56,7 @@ public class SpotlightRest {
         HttpURLConnection conn = null;
         Annotation annotation = null;
 
-        LOG.info(String.format(
+        LOG.info(String.format(Locale.US,
             "Retrieving spotlight annotate with: confidence=%.2f, language=%s, text='%s'",
             confidence, language, text));
 
@@ -66,8 +68,9 @@ public class SpotlightRest {
             conn.setDoOutput(true);
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(3000);
+            String encodedText = URLEncoder.encode(text, "UTF-8");
             String params = String.format(Locale.US, "text=%s&confidence=%.2f",
-                URLEncoder.encode(text, "UTF-8"), confidence);
+                encodedText, confidence);
 
             sendRequest(conn, params);
             annotation = httpHandle(conn);

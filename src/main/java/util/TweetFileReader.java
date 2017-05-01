@@ -13,17 +13,18 @@ public class TweetFileReader {
 
     public static List<Tweet> readTweetsFromFile(File file) {
         List<Tweet> tweets = null;
-        FileReader fr;
         String filename = file.getName();
         try {
             LOG.info("Reading tweets from '" + filename + "' file.");
-            fr = new FileReader(file);
+            FileReader fr = new FileReader(file);
             BufferedReader br = new BufferedReader(fr);
 
             tweets = new ArrayList<>();
             while (br.ready()) {
                 tweets.add(new Tweet(br.readLine().trim()));
             }
+            br.close();
+            fr.close();
         } catch (FileNotFoundException e) {
             LOG.error("File '" + filename + "' not found");
             e.printStackTrace();
@@ -32,7 +33,7 @@ public class TweetFileReader {
             e.printStackTrace();
         }
 
-        LOG.info("Read file.");
+        LOG.info("Read " + tweets.size() + " tweets from file.");
         return tweets;
     }
 }

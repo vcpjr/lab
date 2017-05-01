@@ -28,7 +28,7 @@ public class SpotlightReportTest {
                 put("Schema", new HashSet<String>() {{
                     add("Organization");
                 }});
-                put("DBpedia", new HashSet<String>(Arrays.asList("Agent", "Company", "Organisation")));
+                put("DBpedia", new HashSet<>(Arrays.asList("Agent", "Company", "Organisation")));
             }},
             "Dell",
             0,
