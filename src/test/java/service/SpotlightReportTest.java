@@ -5,21 +5,19 @@ import org.junit.Test;
 import pojo.dbpediaspotlight.Annotation;
 import pojo.dbpediaspotlight.AnnotationResource;
 
-import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
-
 
 public class SpotlightReportTest {
 
-
     @Test
     public void testRepoting() {
-        LocalTime start = LocalTime.now();
+        Instant start = Instant.now();
 
         ClassLoader classLoader = getClass().getClassLoader();
-        String outputFilePath = classLoader.getResource("test").getPath() + "/ReportingTest.csv";
-        SpotlightReport report = new SpotlightReport(outputFilePath);
+        String outputPath = classLoader.getResource("test").getPath();
+        SpotlightReport report = new SpotlightReport(outputPath);
 
         List<AnnotationResource> resources = Collections.singletonList(new AnnotationResource(
             "http://dbpedia.org/resource/Dell",
@@ -45,8 +43,8 @@ public class SpotlightReportTest {
             resources
         );
 
-        LocalTime end = LocalTime.now();
-        long duration = start.until(end, ChronoUnit.MILLIS);
+        Instant end = Instant.now();
+        long duration = Duration.between(start, end).toMillis();
         report.append(ann, duration);
 
         Assert.assertEquals(4, report.getBodyLineSize());

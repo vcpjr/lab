@@ -14,14 +14,14 @@ import java.util.stream.Collectors;
 
 public class SpotlightReport {
 
-    private final String outputFilePath;
+    private final String outputPath;
     private final String header;
     private List<String> reportBody;
     private static final Logger LOG = LoggerFactory.getLogger(SpotlightReport.class);
 
-    public SpotlightReport(String outputFilePath) {
-        this.outputFilePath = outputFilePath;
-        this.header = "Tweet|Confidence|Annotation|URI|Classes|Time To Request";
+    public SpotlightReport(String outputPath) {
+        this.outputPath = outputPath;
+        this.header = "Tweet|Confidence|Annotation|URI|Classes|Request Time(ms)";
         reportBody = new ArrayList<>();
     }
 
@@ -44,8 +44,9 @@ public class SpotlightReport {
         return reportBody.size();
     }
 
-    public void reporting() {
+    public void reporting(String fileName) {
         FileWriter writer = null;
+        String outputFilePath = outputPath + "/" + fileName;
         try {
             writer = new FileWriter(outputFilePath);
             writer.write(header + "\n");
