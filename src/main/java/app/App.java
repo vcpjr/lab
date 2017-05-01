@@ -1,4 +1,4 @@
-package main;
+package app;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,13 +6,13 @@ import service.Reporter;
 
 import java.io.File;
 
-public class Main {
-	public static String PATH_DROPBOX_GGOES = "/Users/ggoes/Dropbox/Datasets (Vilmar)/";
+public class App {
+    public static String PATH_DROPBOX_GGOES = "/Users/ggoes/Dropbox/Datasets (Vilmar)/";
 
     public static String PATH_DROPBOX_VILMAR = "/Users/ggoes/Dropbox/Datasets (Vilmar)/";
     public static String PATH_DROPBOX_TJ = "C:\\Users\\Vilmar\\Dropbox\\Datasets (Vilmar)\\";
 
-	private static final Logger LOG = LoggerFactory.getLogger(Main.class);
+    private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) {
 
