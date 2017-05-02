@@ -1,5 +1,6 @@
 package service;
 
+import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pojo.dbpediaspotlight.Annotation;
@@ -22,7 +23,7 @@ public class SpotlightRest {
     private static String ANNOTATE_PATH = "/{language}/annotate";
 
     private Annotation httpHandle(HttpURLConnection conn) throws IOException, UnexpectedStatusCodeException {
-        if (conn.getResponseCode() != 200) {
+        if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
             LOG.error("URL=" + conn.getURL()
                 + ", status=" + conn.getResponseCode()
                 + ", body=" + conn.getResponseMessage());
@@ -33,13 +34,14 @@ public class SpotlightRest {
 
         LOG.info("Spotlight request successful.");
         BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-        StringBuilder output = new StringBuilder();
-        while (br.ready()) {
-            output.append(br.readLine());
+        StringBuilder builder = new StringBuilder();
+        String output;
+        while ((output = br.readLine()) != null) {
+            builder.append(output);
         }
 
         br.close();
-        String json = output.toString();
+        String json = builder.toString();
         LOG.debug("Spotlight response: " + json);
         return JsonConverter.toAnnotation(json);
     }
@@ -51,7 +53,9 @@ public class SpotlightRest {
         writer.close();
     }
 
-    public Annotation getAnnotation(String text, float confidence, String language) {
+    public Annotation getAnnotation(String text, float confidence, String language)
+        throws UnexpectedStatusCodeException {
+
         String path = ANNOTATE_PATH.replace("{language}", language);
         HttpURLConnection conn = null;
         Annotation annotation = null;
@@ -75,8 +79,9 @@ public class SpotlightRest {
             sendRequest(conn, params);
             annotation = httpHandle(conn);
 
-        } catch (IOException | UnexpectedStatusCodeException e) {
+        } catch (IOException e) {
             LOG.error("Unexpected error.", e);
+            e.printStackTrace();
         } finally {
             assert conn != null;
             conn.disconnect();

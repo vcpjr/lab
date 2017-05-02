@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pojo.dbpediaspotlight.Annotation;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,8 +47,10 @@ public class SpotlightReport {
 
     public void reporting(String fileName) {
         FileWriter writer = null;
-        String outputFilePath = outputPath + "/" + fileName;
+        File outputFilePath = new File(outputPath + "/" + fileName);
         try {
+            if (outputFilePath.getParentFile().mkdirs())
+                LOG.info("Directory '" + outputFilePath.getParentFile() + "' created.");
             writer = new FileWriter(outputFilePath);
             writer.write(header + "\n");
             writer.write(reportBody.stream().collect(Collectors.joining("")));
@@ -63,6 +66,7 @@ public class SpotlightReport {
                 e.printStackTrace();
             }
         }
+        LOG.info("Reported file '" + outputFilePath.getParentFile() + "' created.");
     }
 
 
