@@ -66,7 +66,7 @@ public class SpotlightReport {
                 e.printStackTrace();
             }
         }
-        LOG.info("Reported file '" + outputFilePath.getParentFile() + "' created.");
+        LOG.info("Reported file '" + outputFilePath.getPath() + "' created.");
     }
 
 

@@ -71,7 +71,7 @@ public class SpotlightRest {
             conn.setRequestProperty("Accept", "application/json");
             conn.setDoOutput(true);
             conn.setConnectTimeout(5000);
-            conn.setReadTimeout(3000);
+            conn.setReadTimeout(5000);
             String encodedText = URLEncoder.encode(text, "UTF-8");
             String params = String.format(Locale.US, "text=%s&confidence=%.2f",
                 encodedText, confidence);

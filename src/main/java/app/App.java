@@ -28,6 +28,7 @@ public class App {
             System.exit(1);
         }
 
-        Reporter.execute(confidence, language, inputFile);
+        Reporter reporter = new Reporter(confidence, language, inputFile);
+        reporter.execute();
     }
 }
