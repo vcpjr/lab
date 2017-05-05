@@ -63,4 +63,8 @@ public class Annotation {
     public final List<AnnotationResource> getResources() {
         return resources;
     }
+
+    public final int getResourcesSize() {
+        return resources.size();
+    }
 }
