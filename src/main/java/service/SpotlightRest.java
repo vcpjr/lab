@@ -1,6 +1,5 @@
 package service;
 
-import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pojo.dbpediaspotlight.Annotation;
