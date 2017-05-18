@@ -1,0 +1,43 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+    <id>bin</id>
+    <!--  START SNIPPET: formats  -->
+    <formats>
+        <format>tar.gz</format>
+    </formats>
+
+    <!--  START SNIPPET: fileSets  -->
+    <fileSets>
+        <fileSet>
+            <directory>conf</directory>
+            <outputDirectory>./</outputDirectory>
+            <includes>
+                <include>run.sh</include>
+            </includes>
+            <lineEnding>unix</lineEnding>
+            <fileMode>0755</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>target</directory>
+            <outputDirectory>./</outputDirectory>
+            <includes>
+                <include>Lab.jar</include>
+            </includes>
+        </fileSet>
+
+        <fileSet>
+            <directory>conf</directory>
+            <outputDirectory>conf</outputDirectory>
+            <includes>
+                <include>logback.xml</include>
+            </includes>
+        </fileSet>
+
+        <fileSet>
+            <directory>target/lib</directory>
+            <outputDirectory>lib</outputDirectory>
+        </fileSet>
+    </fileSets>
+    <!--  END SNIPPET: fileSets  -->
+</assembly>
