@@ -57,6 +57,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -94,6 +95,7 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.0.0</version>
                 <configuration>
+                    <outputDirectory>${project.basedir}/artifactory</outputDirectory>
                     <appendAssemblyId>false</appendAssemblyId>
                     <finalName>${project.name}-${project.version}</finalName>
                     <descriptors>
