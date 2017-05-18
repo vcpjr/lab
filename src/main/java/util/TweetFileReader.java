@@ -21,7 +21,7 @@ public class TweetFileReader {
 
             tweets = new ArrayList<>();
             while (br.ready()) {
-                tweets.add(new Tweet(br.readLine().trim()));
+                tweets.add(new Tweet(normalize(br.readLine())));
             }
             br.close();
             fr.close();
@@ -35,5 +35,9 @@ public class TweetFileReader {
 
         LOG.info("Read " + tweets.size() + " tweets from file.");
         return tweets;
+    }
+
+    private static String normalize(String text) {
+        return text.replace("|", ";").trim();
     }
 }
