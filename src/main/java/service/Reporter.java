@@ -11,6 +11,7 @@ import util.TweetFileReader;
 import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 
@@ -34,7 +35,6 @@ public class Reporter {
     }
 
     public void execute() {
-        Instant currentTime = Instant.now();
         tweets.forEach((Tweet tweet) -> {
             try {
                 final Instant start = Instant.now();
@@ -56,6 +56,9 @@ public class Reporter {
                 LOG.error("Unknown exception", e);
             }
         });
-        report.reporting(currentTime.toString() + ".csv");
+        report.reporting(String.format(Locale.US,"%s-%s-%.2f.csv",
+            LocalDate.now().toString(),
+            language,
+            confidence));
     }
 }
