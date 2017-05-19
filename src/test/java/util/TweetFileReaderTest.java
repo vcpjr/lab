@@ -16,5 +16,6 @@ public class TweetFileReaderTest {
 
         List<Tweet> tweets = TweetFileReader.readTweetsFromFile(resourceFile);
         Assert.assertEquals(8, tweets.size());
+        tweets.forEach(tweet -> Assert.assertFalse(tweet.getMessage().contains("|")));
     }
 }
