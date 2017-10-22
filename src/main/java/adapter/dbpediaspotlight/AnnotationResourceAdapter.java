@@ -16,23 +16,9 @@ public class AnnotationResourceAdapter implements JsonDeserializer<AnnotationRes
         throws JsonParseException {
 
         final JsonObject obj = json.getAsJsonObject();
-        final Map<String, Set<String>> types = new HashMap<>();
-
-        for (String typ : obj.get("@types").getAsString().split(",")) {
-            if (typ.isEmpty())
-                break;
-            final String[] keyValue = typ.split(":");
-            final String key = keyValue[0];
-            final String value = keyValue[1];
-            if (types.containsKey(key))
-                types.get(key).add(value);
-            else {
-                types.put(key, new HashSet<String>() {{
-                    add(value);
-                }});
-            }
-        }
-
+        final Set<String> types = !obj.get("@types").getAsString().isEmpty()
+            ? new HashSet<>(Arrays.asList(obj.get("@types").getAsString().split(",")))
+            : Collections.emptySet();
         final String uri = obj.get("@URI").getAsString();
         final int support = obj.get("@support").getAsInt();
         final String surfaceForm = obj.get("@surfaceForm").getAsString();

@@ -2,7 +2,6 @@ package pojo.dbpediaspotlight;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -16,7 +15,7 @@ public class AnnotationResource {
     @SerializedName("@support")
     private int support;
     @SerializedName("@types")
-    private Map<String, Set<String>> types;
+    private Set<String> types;
     @SerializedName("@surfaceForm")
     private String surfaceForm;
     @SerializedName("@offset")
@@ -26,7 +25,7 @@ public class AnnotationResource {
     @SerializedName("@percentageOfSecondRank")
     private double percentageOfSecondRank;
 
-    public AnnotationResource(String uri, int support, Map<String, Set<String>> types, String surfaceForm,
+    public AnnotationResource(String uri, int support, Set<String> types, String surfaceForm,
                               int offset, double similarityScore, double percentageOfSecondRank) {
         this.uri = uri;
         this.support = support;
@@ -45,7 +44,7 @@ public class AnnotationResource {
         return support;
     }
 
-    public final Map<String, Set<String>> getTypes() {
+    public final Set<String> getTypes() {
         return types;
     }
 
