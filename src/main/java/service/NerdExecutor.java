@@ -41,21 +41,23 @@ public class Reporter {
                 final Instant end = Instant.now();
                 final long duration = Duration.between(start, end).toMillis();
                 report.append(annotation, duration);
-                Thread.sleep(200);
             } catch (UnexpectedStatusCodeException e) {
                 LOG.error(String.format(Locale.US,
                     "Unexpected status code error: tweet=%s, confidence=%.2f, language=%s",
                     tweet.getMessage(), confidence, language),
                     e);
-            } catch (InterruptedException e) {
-                LOG.error("Thread error: ", e);
             } catch (JsonSyntaxException e) {
                 LOG.error("Json Syntax error to annotate tweet message: '" + tweet.getMessage() + "'", e);
             } catch (Exception e) {
                 LOG.error("Unknown exception", e);
             }
         });
-        report.reporting(String.format(Locale.US, "%s-%s-%.2f.csv",
+        report.reportAnnotedClasses(String.format(Locale.US, "annoted-classes-%s-%s-%.2f.csv",
+            LocalDate.now().toString(),
+            language,
+            confidence));
+
+        report.reportAnnotedResources(String.format(Locale.US, "annoted-resources-%s-%s-%.2f.csv",
             LocalDate.now().toString(),
             language,
             confidence));
