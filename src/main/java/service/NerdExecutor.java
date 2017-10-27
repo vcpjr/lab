@@ -24,10 +24,14 @@ public class NerdExecutor {
 
     private final List<Tweet> tweets;
     private final SpotlightRest rest;
+    private final String inputFilename;
 
     public NerdExecutor(File datasetFile) {
         rest = new SpotlightRest();
         tweets = TweetFileReader.readTweetsFromFile(datasetFile);
+
+        String filePath = datasetFile.getName();
+        inputFilename = filePath.split("\\.")[0];
     }
 
     public void execute(float confidence, String language) {
@@ -41,11 +45,11 @@ public class NerdExecutor {
                 annotated.getResources()
                     .forEach(resource -> {
                         // tweet id(#);Resources
-                        final String annotatedResource = String.format(Locale.US, "%s;%s\n", tweetId, resource.getURI());
+                        final String annotatedResource = String.format(Locale.US, "%s;%s", tweetId, resource.getURI());
                         resourceReport.append(annotatedResource);
                         resource.getTypes().forEach(classType-> {
                                 // Tweet id(#);classes
-                                final String resourceClass = String.format(Locale.US, "%s;%s\n", tweetId, classType);
+                                final String resourceClass = String.format(Locale.US, "%s;%s", tweetId, classType);
                                 classReport.append(resourceClass);
                             }
                         );
@@ -64,12 +68,13 @@ public class NerdExecutor {
 
         String postfixFilename = String.format(
             Locale.US,
-            "%s-%s-%.2f.csv",
+            "%s-%s-%s-%.2f.csv",
+            inputFilename.replaceAll("\\s", ""),
             LocalDate.now().toString(),
             language,
             confidence);
-;
-        resourceReport.generate(new File(outputPath, "annotated-resources-" + postfixFilename));
-        classReport.generate(new File(outputPath, "annotated-classes-" + postfixFilename));
+
+        resourceReport.generate(new File(outputPath, "resources-" + postfixFilename));
+        classReport.generate(new File(outputPath, "classes-" + postfixFilename));
     }
 }

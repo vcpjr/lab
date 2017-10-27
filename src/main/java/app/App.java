@@ -6,10 +6,18 @@ import service.NerdExecutor;
 
 import java.io.File;
 
+import static java.lang.System.exit;
+
 public class App {
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) {
+
+        if (args.length < 3) {
+            System.err.println("Parameters not found. For run this application use follow command.");
+            System.out.println("./run.sh <dataset> <confidence_level> <language>\n");
+            exit(1);
+        }
 
         LOG.info("Starting Application.");
         String filePath = args[0];
@@ -20,7 +28,7 @@ public class App {
         if (!inputFile.exists()) {
             LOG.error("File not found!");
             System.err.println("File not found!");
-            System.exit(1);
+            exit(1);
         }
 
         NerdExecutor nerdExecutor = new NerdExecutor(inputFile);
