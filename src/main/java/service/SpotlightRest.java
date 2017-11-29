@@ -14,7 +14,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Locale;
 
-public class SpotlightRest {
+class SpotlightRest {
     private static final Logger LOG = LoggerFactory.getLogger(SpotlightRest.class);
 
     private static String PROTOCOL = "http";
@@ -52,7 +52,7 @@ public class SpotlightRest {
         writer.close();
     }
 
-    public Annotation getAnnotation(String text, float confidence, String language)
+    Annotation getAnnotation(String text, float confidence, String language)
         throws UnexpectedStatusCodeException {
 
         String path = ANNOTATE_PATH.replace("{language}", language);

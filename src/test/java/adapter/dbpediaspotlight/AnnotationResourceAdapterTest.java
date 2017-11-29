@@ -45,17 +45,8 @@ public class AnnotationResourceAdapterTest {
 
     @Test
     public void testDeserializedTypes() {
-        Map<String, Set<String>> expectedTypes = new HashMap<String, Set<String>>() {{
-            put("DBpedia", new HashSet<String>() {{
-                add("Agent");
-                add("Organisation");
-                add("Company");
-            }});
-
-            put("Schema", new HashSet<String>() {{
-                add("Organization");
-            }});
-        }};
+        Set expectedTypes = new HashSet<>(Arrays.asList(
+            "DBpedia:Agent", "DBpedia:Organisation", "DBpedia:Company", "Schema:Organization"));
 
         Assert.assertEquals(expectedTypes, resource.getTypes());
     }

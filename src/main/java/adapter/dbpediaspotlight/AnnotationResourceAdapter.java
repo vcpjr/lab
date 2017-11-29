@@ -1,12 +1,16 @@
 package adapter.dbpediaspotlight;
 
-import com.google.gson.*;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import pojo.dbpediaspotlight.AnnotationResource;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class AnnotationResourceAdapter implements JsonDeserializer<AnnotationResource> {
@@ -16,23 +20,9 @@ public class AnnotationResourceAdapter implements JsonDeserializer<AnnotationRes
         throws JsonParseException {
 
         final JsonObject obj = json.getAsJsonObject();
-        final Map<String, Set<String>> types = new HashMap<>();
-
-        for (String typ : obj.get("@types").getAsString().split(",")) {
-            if (typ.isEmpty())
-                break;
-            final String[] keyValue = typ.split(":");
-            final String key = keyValue[0];
-            final String value = keyValue[1];
-            if (types.containsKey(key))
-                types.get(key).add(value);
-            else {
-                types.put(key, new HashSet<String>() {{
-                    add(value);
-                }});
-            }
-        }
-
+        final Set<String> types = !obj.get("@types").getAsString().isEmpty()
+            ? new HashSet<>(Arrays.asList(obj.get("@types").getAsString().split(",")))
+            : Collections.emptySet();
         final String uri = obj.get("@URI").getAsString();
         final int support = obj.get("@support").getAsInt();
         final String surfaceForm = obj.get("@surfaceForm").getAsString();
