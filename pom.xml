@@ -15,6 +15,13 @@
         </dependency>
         <!-- TODO importar dependencia do DBpedia Spotlight -->
 
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>apache-jena-libs</artifactId>
+			<type>pom</type>
+			<version>3.3.0</version>
+		</dependency>
+
         <!-- LOGGER -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
