@@ -1,11 +1,12 @@
 package util;
 
-import org.junit.Assert;
-import org.junit.Test;
-import pojo.Tweet;
-
 import java.io.File;
 import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import pojo.Tweet;
 
 public class TweetFileReaderTest {
 
@@ -16,6 +17,6 @@ public class TweetFileReaderTest {
 
         List<Tweet> tweets = TweetFileReader.readTweetsFromFile(resourceFile);
         Assert.assertEquals(8, tweets.size());
-        tweets.forEach(tweet -> Assert.assertFalse(tweet.getMessage().contains("|")));
+        tweets.forEach(tweet -> Assert.assertFalse(tweet.getText().contains("|")));
     }
 }
