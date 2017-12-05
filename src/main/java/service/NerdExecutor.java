@@ -1,20 +1,19 @@
 package service;
 
-import com.google.gson.JsonSyntaxException;
+import java.io.File;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Locale;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.gson.JsonSyntaxException;
+
 import pojo.Tweet;
 import pojo.dbpediaspotlight.Annotation;
 import util.CSVReport;
 import util.TweetFileReader;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Locale;
 
 public class NerdExecutor {
 
@@ -35,13 +34,15 @@ public class NerdExecutor {
     }
 
     public void execute(float confidence, String language) {
+    	//TODO alterar para incluir: 
+    	//tweet id (id), user id, text, pre-processed text, confidence, mention, URI, Chosen class, Request time
         CSVReport resourceReport = new CSVReport("Tweet id(#);Resources");
         CSVReport classReport = new CSVReport("Tweet id(#);Classes");
 
         for(int i = 0; i < tweets.size(); ++i) {
             final int tweetId = i + 1;
             try {
-                final Annotation annotated = rest.getAnnotation(tweets.get(i).getMessage(), confidence, language);
+                final Annotation annotated = rest.getAnnotation(tweets.get(i).getText(), confidence, language);
                 annotated.getResources()
                     .forEach(resource -> {
                         // tweet id(#);Resources
@@ -57,10 +58,10 @@ public class NerdExecutor {
             } catch (UnexpectedStatusCodeException e) {
                 LOG.error(String.format(Locale.US,
                     "Unexpected status code error: tweet=%s, confidence=%.2f, language=%s",
-                    tweets.get(i).getMessage(), confidence, language),
+                    tweets.get(i).getText(), confidence, language),
                     e);
             } catch (JsonSyntaxException e) {
-                LOG.error("Json Syntax error to annotate tweet message: '" + tweets.get(i).getMessage() + "'", e);
+                LOG.error("Json Syntax error to annotate tweet message: '" + tweets.get(i).getText() + "'", e);
             } catch (Exception e) {
                 LOG.error("Unknown exception", e);
             }

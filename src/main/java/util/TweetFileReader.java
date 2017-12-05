@@ -1,12 +1,19 @@
 package util;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pojo.Tweet;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import adapter.dbpediaspotlight.TweetAdapter;
+import pojo.Tweet;
 
 public class TweetFileReader {
     private static final Logger LOG = LoggerFactory.getLogger(TweetFileReader.class);
@@ -21,7 +28,8 @@ public class TweetFileReader {
 
             tweets = new ArrayList<>();
             while (br.ready()) {
-                tweets.add(new Tweet(normalize(br.readLine())));
+            	//TODO alterar aqui para pegar os demais campos do tweet (lendo do JSON)
+				tweets.add(JsonConverter.toTweet(normalize(br.readLine())));
             }
             br.close();
             fr.close();
@@ -38,6 +46,7 @@ public class TweetFileReader {
     }
 
     private static String normalize(String text) {
+    	//TODO incluir mais caracteres?
         return text.replace("|", ";").trim();
     }
 }

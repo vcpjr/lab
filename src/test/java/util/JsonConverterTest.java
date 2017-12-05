@@ -2,9 +2,12 @@ package util;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import pojo.Tweet;
 import pojo.dbpediaspotlight.Annotation;
 import pojo.dbpediaspotlight.AnnotationResource;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 public class JsonConverterTest {
@@ -44,6 +47,14 @@ public class JsonConverterTest {
             && lhs.getSparql().equals(rhs.getSparql())
             && lhs.getPolicy().equals(rhs.getPolicy());
     }
+    
+    boolean hasEquals(Tweet lhs, Tweet rhs) {
+        return lhs.getId().equals(rhs.getId())
+        	&& lhs.getUserId().equals(rhs.getUserId())
+        	&& lhs.getText().equals(rhs.getText())
+        	&& lhs.getCreationDate().equals(rhs.getCreationDate())
+        	&& lhs.isRetweet() == rhs.isRetweet();
+    }
 
     @Test
     public void testConvertJsonToAnnotation() {
@@ -75,5 +86,36 @@ public class JsonConverterTest {
             ))
         );
         Assert.assertTrue(hasEquals(JsonConverter.toAnnotation(json), ann));
+    }
+    
+    @Test
+    public void testConvertJsonToTweet() {
+    	//TODO normalizar os dados do JSON vindos do mongo
+//        final String json = "{" +
+//                "  '_id':'{\"$oid\":\"5999d40444d5bb0420b429c2\"}," +
+//                "  '\"id\":{\"$numberLong\":\"899336510713016320\"}," +
+//                "  \"userid\":{\"$numberLong\":\"633419436\"}," +
+//                "  \"createdat\":{\"$date\":\"2017-08-20T00:00:00.000Z\"}," +
+//                "  \"text\":\"Kkkkkk sim https://t.co/xeuLCcENLE\", " +
+//                "  \"isretweet\":false" +
+//                "}";
+        
+        final String json = "{" +
+                "  'id':'1'," +
+                "  'userid':'1'," +
+                "  'text':'text ....'," +
+                "  'createdat':'2017-08-20T00:00:00.000Z'," +
+                "  'isretweet':'false'" +
+                "}";
+
+        Calendar calendario =  
+        	      new Calendar.Builder()  
+        	        .setDate(2017, Calendar.AUGUST, 20)  
+        	        .setTimeOfDay(0, 0, 0)  
+        	        .build(); 
+        
+        Date creationDate = calendario.getTime();
+        Tweet t = new Tweet(1L, 1L, "text ....", creationDate, false);
+        Assert.assertTrue(hasEquals(JsonConverter.toTweet(json), t));
     }
 }

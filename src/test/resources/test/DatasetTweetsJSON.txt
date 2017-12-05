@@ -1,0 +1,3 @@
+{'id':'1','userid':'1', 'text':'text 1....','createdat':'2017-08-20T00:00:00.000Z','isretweet':'false'}
+{'id':'2','userid':'1', 'text':'text 2....','createdat':'2017-10-11T00:00:00.000Z','isretweet':'true'}
+{'id':'3','userid':'2', 'text':'text 3....','createdat':'2017-05-03T00:00:00.000Z','isretweet':'false'}
