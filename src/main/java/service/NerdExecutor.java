@@ -36,21 +36,21 @@ public class NerdExecutor {
     public void execute(float confidence, String language) {
     	//TODO alterar para incluir: 
     	//tweet id (id), user id, text, pre-processed text, confidence, mention, URI, Chosen class, Request time
-        CSVReport resourceReport = new CSVReport("Tweet id(#);Resources");
-        CSVReport classReport = new CSVReport("Tweet id(#);Classes");
+        CSVReport resourceReport = new CSVReport("Tweet id(#); User id; Text; Confidence; Resource URI");
+        CSVReport classReport = new CSVReport("Tweet id(#); User id; Text; Confidence; Classes");
 
         for(int i = 0; i < tweets.size(); ++i) {
-            final int tweetId = i + 1;
             try {
-                final Annotation annotated = rest.getAnnotation(tweets.get(i).getText(), confidence, language);
+            	Tweet t = tweets.get(i);
+                final Annotation annotated = rest.getAnnotation(t.getText(), confidence, language);
                 annotated.getResources()
                     .forEach(resource -> {
                         // tweet id(#);Resources
-                        final String annotatedResource = String.format(Locale.US, "%s;%s", tweetId, resource.getURI());
+                        final String annotatedResource = String.format(Locale.US, "%s;%s;%s;%.5f;%s", t.getId(), t.getUserId(), t.getText(), confidence, resource.getURI());
                         resourceReport.append(annotatedResource);
                         resource.getTypes().forEach(classType-> {
                                 // Tweet id(#);classes
-                                final String resourceClass = String.format(Locale.US, "%s;%s", tweetId, classType);
+                                final String resourceClass = String.format(Locale.US, "%s;%s;%s;%.5f;%s", t.getId(), t.getUserId(), t.getText(), confidence, classType);
                                 classReport.append(resourceClass);
                             }
                         );
