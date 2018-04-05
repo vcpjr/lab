@@ -1,12 +1,16 @@
 package app;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import service.NerdExecutor;
+import static java.lang.System.exit;
 
 import java.io.File;
+import java.util.ArrayList;
 
-import static java.lang.System.exit;
+import org.apache.jena.rdf.model.RDFNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import service.BridgeExecutor;
+import service.NerdExecutor;
 
 public class App {
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
@@ -31,7 +35,20 @@ public class App {
             exit(1);
         }
 
+        //STEP 1: SEMANTIC ENRICHMENT AND ACCOUNTING
         NerdExecutor nerdExecutor = new NerdExecutor(inputFile);
         nerdExecutor.execute(confidence, language);
+        
+        //STEP 2: SEMANTIC DATA CUBE CONSTRUCTION
+        //TODO
+        RDFNode nodeFromKG = null;
+        ArrayList<String> relationships = null;
+		BridgeExecutor bridgeService = new BridgeExecutor(relationships );
+		bridgeService.execute(nodeFromKG);
+		
+		//TODO create the final step
+		//SemanticDataCubeExecutor semanticDataCubeExecutor = new SemanticDataCubeExecutor(hierarchyFile);
+		//semanticDataCubeExecutor.execute(); //build the DW
+        
     }
 }
