@@ -16,9 +16,12 @@ import pojo.Facet;
 
 public class BridgeExecutor {
 
+	// K: Recurso ou classe da DBpedia
+	// V: classe da ontologia de alto nível
 	private final HashMap<RDFNode, String> keyBridges;
 	private final HashMap<RDFNode, String> newBridges;
 	private final HashMap<RDFNode, String> inconsistentBridges;
+	
 	private final ArrayList<String> relationships; //the selected RDF relations between the nodeFromKG and the children
 	private final Model model; //from JENA
 	
@@ -63,6 +66,8 @@ public class BridgeExecutor {
 					}else{
 						inconsistentBridges.put(childNode, domainClass);
 					}
+				}else {//Ainda não tem ponte
+					newBridges.put(childNode, domainClass);
 				}
 			}
 		}
@@ -78,21 +83,23 @@ public class BridgeExecutor {
 		
 		ArrayList<RDFNode> children = new ArrayList<>();
 		
+		if(!model.containsResource(nodeFromKG)){
+			//TODO adicionar o pai na hierarquia
+			//model.add(resource, property, nodeFromKG);
+		}
+		
 		//Testar com todas as propriedades?
 		for(String relationshipName: relationships){
 			Property property = model.createProperty(relationshipName);
 			Resource resource = null; //TODO descobrir o que é (ver código do Juarez)
 			//TODO Usar o JENA para ir populando a hierarquia
-			if(!model.containsResource(nodeFromKG)){
-				model.add(resource, property, nodeFromKG);
-				children.add(nodeFromKG);
-			}
+			//TODO consultas com SPARQL para os filhos?
+			
+			children.add(nodeFromKG);
 		}
-		
 	
 		return children;
 	}
-
 	
 	// TODO rever as entradas
 	@Deprecated
