@@ -3,57 +3,67 @@ package service;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Set;
 
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.SimpleSelector;
 import org.apache.jena.rdf.model.StmtIterator;
 
 import pojo.Facet;
+import pojo.KGNode;
 
 public class BridgeExecutor {
 
 	// K: Recurso ou classe da DBpedia
 	// V: classe da ontologia de alto nível
-	private final HashMap<RDFNode, String> keyBridges;
-	private final HashMap<RDFNode, String> newBridges;
-	private final HashMap<RDFNode, String> inconsistentBridges;
+	private final HashMap<KGNode, String> keyBridges;
+	private final HashMap<KGNode, String> newBridges;
+	private final HashMap<KGNode, String> inconsistentBridges;
 	
-	private final ArrayList<String> relationships; //the selected RDF relations between the nodeFromKG and the children
-	private final Model model; //from JENA
+	private final HashMap<String, String> prefixes; //K: prefix (rdf); V: uri (http://www.w3.org/2000/01/rdf-schema#)
+	private final ArrayList<String> properties; //rdf:type or rdfs:subClassOf
 	
-	public BridgeExecutor(ArrayList<String> relationships){
+	private final KGNode root;
+	
+	public BridgeExecutor(HashMap<String, String> prefixes, ArrayList<String> properties, String rootURI){
 		//TODO read keyBridges from a file?
 		keyBridges = new HashMap<>();
 		newBridges = new HashMap<>();
 		inconsistentBridges = new HashMap<>();
-		this.relationships = relationships;
+		this.properties = properties;
+		this.prefixes = prefixes;
 		
-		model = ModelFactory.createDefaultModel();
+		//TODO usar a consulta para pegar o label
+		String rootLabel = rootURI;
+		root = new KGNode(rootLabel, rootURI, null);
 	}
 	
 	//TODO parametrizar?
-	public void execute(RDFNode nodeFromKG){
+	public void execute(){
 		//recursive procedure, executes until the final of the nodeFromKG children hierarchy
-		this.checkComplete(nodeFromKG, null);
+		this.checkComplete(this.root, null);
 	}
 	
 	/**
 	 * 
-	 * @param nodeFromKG node from hierarchy on Knowledge Graph
+	 * @param node node from hierarchy on Knowledge Graph
 	 * @param dc domain class bridged to b
 	 * 
 	 * @returns void, but the algorithm populates newBridges and inconsistentBridges maps
 	 */
-	private void checkComplete(RDFNode nodeFromKG, String domainClass){
+	private void checkComplete(KGNode node, String domainClass){
 		
-		ArrayList<RDFNode> children = getChildrenFromNodeOnKG(nodeFromKG);
+		ArrayList<KGNode> children = getChildrenFromNodeOnKG(node);
 		
 		for(int i = 0; i< children.size(); i++){
-			RDFNode childNode = children.get(i);
+			KGNode childNode = children.get(i);
 			domainClass = keyBridges.get(childNode);
 			
 			if(domainClass == null){
@@ -79,22 +89,45 @@ public class BridgeExecutor {
 	 *  
 	 * @return a list from the direct children from nodeFromKG 
 	 */
-	private ArrayList<RDFNode> getChildrenFromNodeOnKG(RDFNode nodeFromKG) {
+	private ArrayList<KGNode> getChildrenFromNodeOnKG(KGNode nodeFromKG) {
 		
-		ArrayList<RDFNode> children = new ArrayList<>();
+		ArrayList<KGNode> children = new ArrayList<>();
+		//Testar com todas as propriedades?
 		
-		if(!model.containsResource(nodeFromKG)){
-			//TODO adicionar o pai na hierarquia
-			//model.add(resource, property, nodeFromKG);
+		//TODO como identificar uma folha na hierarquia?
+		// 1 - Verificar de contém a propriedade rdf-schema#domain
+		// Entidades não tem domínio!!
+		String queryPrefix = "";
+		
+		for(String prefix: prefixes.keySet()){
+			//PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			queryPrefix += "PREFIX " + prefix + ": <" + prefixes.get(prefix) +  "> \n";
 		}
 		
-		//Testar com todas as propriedades?
-		for(String relationshipName: relationships){
-			Property property = model.createProperty(relationshipName);
-			Resource resource = null; //TODO descobrir o que é (ver código do Juarez)
-			//TODO Usar o JENA para ir populando a hierarquia
-			//TODO consultas com SPARQL para os filhos?
+		for(String property: properties){
+			//consulta que retorna o label dos filhos de um determinado nodo pai, dada uma relação
+			String querySPARQL =  queryPrefix + 
+					
+					" select ?pai ?filho " + 
+					" where {?filho " + property + " ?pai . ?pai rdfs:label \"agent\"@en } LIMIT 10";
 			
+			
+			Query query = QueryFactory.create(querySPARQL);
+			QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
+
+			try {
+			    ResultSet results = qexec.execSelect();
+			    
+		    	System.out.println(results.toString());
+			    
+			    while(results.hasNext()) {
+			    	System.out.println(results.next().toString());
+			    }
+			} 
+			finally {
+			   qexec.close();
+			}
+
 			children.add(nodeFromKG);
 		}
 	
@@ -119,13 +152,13 @@ public class BridgeExecutor {
 
 		Model datasetModel = Facet.getSingleton().openGraph(domain);
 		Property property = datasetModel.getProperty(propertyString);
-		StmtIterator iterator = datasetModel.listStatements(new SimpleSelector(null, property, (RDFNode) null));
+		StmtIterator iterator = datasetModel.listStatements(new SimpleSelector(null, property, (KGNode) null));
 
 		Resource r;
 		while (!queue.isEmpty()) {
 			r = queue.removeFirst();
 
-			StmtIterator adjacents = datasetModel.listStatements(new SimpleSelector(r, property, (RDFNode) null));
+			StmtIterator adjacents = datasetModel.listStatements(new SimpleSelector(r, property, (KGNode) null));
 			Resource r_i;
 			while (adjacents.hasNext()) {
 				r_i = (Resource) adjacents.next();
