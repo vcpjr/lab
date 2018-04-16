@@ -1,9 +1,10 @@
 package service;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Set;
+import java.util.List;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -18,6 +19,7 @@ import org.apache.jena.rdf.model.StmtIterator;
 
 import pojo.Facet;
 import pojo.KGNode;
+import util.BridgesFileReader;
 
 public class BridgeExecutor {
 
@@ -30,10 +32,13 @@ public class BridgeExecutor {
 	private final HashMap<String, String> prefixes; //K: prefix (rdf); V: uri (http://www.w3.org/2000/01/rdf-schema#)
 	private final ArrayList<String> properties; //rdf:type or rdfs:subClassOf
 	
-	private final KGNode root;
+	private KGNode root;
+	private List<KGNode> nodesFromFile;
 	
-	public BridgeExecutor(HashMap<String, String> prefixes, ArrayList<String> properties, String rootURI){
-		//TODO read keyBridges from a file?
+	public BridgeExecutor(HashMap<String, String> prefixes, ArrayList<String> properties, String rootURI, File datasetFile){
+        nodesFromFile = BridgesFileReader.readKGNodesFromFile(datasetFile);
+
+		//TODO read keyBridges from a CSV file
 		keyBridges = new HashMap<>();
 		newBridges = new HashMap<>();
 		inconsistentBridges = new HashMap<>();
@@ -42,13 +47,17 @@ public class BridgeExecutor {
 		
 		//TODO usar a consulta para pegar o label
 		String rootLabel = rootURI;
-		root = new KGNode(rootLabel, rootURI, null);
+		root = new KGNode(rootLabel, rootURI);
 	}
 	
-	//TODO parametrizar?
 	public void execute(){
 		//recursive procedure, executes until the final of the nodeFromKG children hierarchy
-		this.checkComplete(this.root, null);
+		//TODO teste com a raiz variável, de acordo com os termos encontrados em cada tweet
+		// Validar
+		for(KGNode node: nodesFromFile){
+			this.root = node;
+			this.checkComplete(this.root, null);
+		}
 	}
 	
 	/**
@@ -118,6 +127,7 @@ public class BridgeExecutor {
 			try {
 			    ResultSet results = qexec.execSelect();
 			    
+			    //TODO incluir as relações para KGNode atual
 		    	System.out.println(results.toString());
 			    
 			    while(results.hasNext()) {

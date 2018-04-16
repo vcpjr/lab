@@ -1,5 +1,6 @@
 package app;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -13,10 +14,10 @@ public class App {
 
     public static void main(String[] args) {
 
-        /*if (args.length < 3) {
+        if (args.length < 3) {
             System.err.println("Parameters not found. For run this application use follow command.");
             System.out.println("./run.sh <dataset> <confidence_level> <language>\n");
-            exit(1);
+            System.exit(1);
         }
 
         LOG.info("Starting Application.");
@@ -24,18 +25,19 @@ public class App {
         float confidence = Float.parseFloat(args[1]);
         String language = args[2];
         File inputFile = new File(filePath);
-
+        
         if (!inputFile.exists()) {
             LOG.error("File not found!");
             System.err.println("File not found!");
-            exit(1);
+            System.exit(1);
         }
-
+        
+        /*
         //STEP 1: SEMANTIC ENRICHMENT AND ACCOUNTING
         NerdExecutor nerdExecutor = new NerdExecutor(inputFile);
         nerdExecutor.execute(confidence, language);
-        
         */
+        
         //STEP 2: SEMANTIC DATA CUBE CONSTRUCTION
         //TODO
         String rootURI = "http://dbpedia.org/ontology/Organisation";
@@ -47,7 +49,7 @@ public class App {
 		prefixes.put("rdfs", "http://www.w3.org/2000/01/rdf-schema#");
 		prefixes.put("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
 		
-		BridgeExecutor bridgeService = new BridgeExecutor(prefixes, properties, rootURI);
+		BridgeExecutor bridgeService = new BridgeExecutor(prefixes, properties, rootURI, inputFile);
 		bridgeService.execute();
 		
 		/*

@@ -1,5 +1,6 @@
 package pojo;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -12,7 +13,7 @@ public class KGNode {
 
 	private String label;
 	private String uri;
-	private Map<String, KGNode> relationships;
+	private Map<KGNode, String> relationships;
 	
 	public KGNode() {
 		
@@ -34,18 +35,24 @@ public class KGNode {
 		this.uri = uri;
 	}
 
-	public Map<String, KGNode> getRelationships() {
+	public Map<KGNode, String> getRelationships() {
 		return relationships;
 	}
 
-	public void setRelationships(Map<String, KGNode> relationships) {
+	public void setRelationships(Map<KGNode, String> relationships) {
 		this.relationships = relationships;
 	}
+	
+	public void addRelationship(String type, KGNode otherNode){
+		if(!this.relationships.containsKey(otherNode)){
+			relationships.put(otherNode, type);
+		}
+	}
 
-	public KGNode(String label, String uri, Map<String, KGNode> relationships) {
+	public KGNode(String label, String uri) {
 		super();
 		this.label = label;
 		this.uri = uri;
-		this.relationships = relationships;
+		this.relationships = new HashMap<>();
 	}
 }
