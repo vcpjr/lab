@@ -46,7 +46,7 @@ public class BridgesFileReader {
 					if(cellURI != null && cellURI.toString() != null){
 						LOG.info("Reading cell: " + cellURI.toString());
 						String label = cellURI.toString();
-						String uri = cellURI.getStringCellValue();
+						String uri = cellURI.toString();
 						KGNode node = new KGNode(label, uri);
 						nodes.add(node);
 					}
