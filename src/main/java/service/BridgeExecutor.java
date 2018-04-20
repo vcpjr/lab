@@ -34,6 +34,7 @@ public class BridgeExecutor {
 	
 	private KGNode root;
 	private List<KGNode> nodesFromFile;
+	ArrayList<KGNode> childrenNonRecursive = new ArrayList<>();
 	
 	public BridgeExecutor(HashMap<String, String> prefixes, ArrayList<String> properties, String rootURI, File datasetFile){
         nodesFromFile = BridgesFileReader.readKGNodesFromFile(datasetFile);
@@ -56,8 +57,11 @@ public class BridgeExecutor {
 		// Validar
 		for(KGNode node: nodesFromFile){
 			this.root = node;
-			this.checkComplete(this.root, null);
+			//this.checkComplete(this.root, null);
+			this.checkCompleteNonRecursive(root, null);
 		}
+		
+		
 	}
 	
 	/**
@@ -90,7 +94,42 @@ public class BridgeExecutor {
 				}
 			}
 		}
-	}	
+	}
+	
+	/**
+	 * 
+	 * @param node node from hierarchy on Knowledge Graph
+	 * @param dc domain class bridged to b
+	 * 
+	 * @returns void, but the algorithm populates newBridges and inconsistentBridges maps
+	 */
+	private void checkCompleteNonRecursive(KGNode node, String domainClass){
+		
+		ArrayList<KGNode> children = getChildrenFromNodeOnKG(node);
+		
+		//TODO melhorar caso funcione
+		for (KGNode n: children) {
+			if(!this.childrenNonRecursive.contains(n)){
+				this.childrenNonRecursive.add(n);
+			}
+		}
+		
+		for(int i = 0; i< children.size(); i++){
+			KGNode childNode = children.get(i);
+			domainClass = keyBridges.get(childNode);
+			
+			if(keyBridges.containsKey(childNode)){
+				if(keyBridges.get(childNode) != null 
+						&& keyBridges.get(childNode).equals(domainClass)){
+					newBridges.put(childNode, domainClass);
+				}else{
+					inconsistentBridges.put(childNode, domainClass);
+				}
+			}else {//Ainda não tem ponte
+				newBridges.put(childNode, domainClass);
+			}
+		}
+	}
 
 	/**
 	 * 
@@ -118,7 +157,7 @@ public class BridgeExecutor {
 			String querySPARQL =  queryPrefix + 
 					
 					" select ?pai ?filho " + 
-					" where {?filho " + property + " ?pai . ?pai rdfs:label \"agent\"@en } LIMIT 10";
+					" where {?filho " + property + " ?pai . ?pai rdfs:label \"agent\"@en } LIMIT 100";
 			
 			
 			Query query = QueryFactory.create(querySPARQL);
@@ -137,8 +176,9 @@ public class BridgeExecutor {
 			finally {
 			   qexec.close();
 			}
-
-			children.add(nodeFromKG);
+			if(!children.contains(nodeFromKG)){
+				children.add(nodeFromKG);
+			}
 		}
 	
 		return children;
