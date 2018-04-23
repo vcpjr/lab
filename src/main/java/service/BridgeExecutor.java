@@ -43,14 +43,13 @@ public class BridgeExecutor {
 	private final ArrayList<String> properties; //rdf:type or rdfs:subClassOf
 	
 	private KGNode root;
-	private List<KGNode> nodesFromFile;
 	ArrayList<KGNode> childrenNonRecursive = new ArrayList<>();
 	
 	public BridgeExecutor(HashMap<String, String> prefixes, ArrayList<String> properties, String rootURI, File datasetFile){
-        nodesFromFile = BridgesFileReader.readKGNodesFromFile(datasetFile);
+        
 
 		//TODO read keyBridges from a CSV file
-		keyBridges = new HashMap<>();
+		keyBridges = BridgesFileReader.readKeyBridgesFromFile(datasetFile);
 		newBridges = new HashMap<>();
 		inconsistentBridges = new HashMap<>();
 		this.properties = properties;

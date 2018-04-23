@@ -42,7 +42,9 @@ public class App {
         //TODO
         String rootURI = "http://dbpedia.org/ontology/Organisation";
         ArrayList<String> properties = new ArrayList<>();
-        properties.add("rdf:type");
+        
+        //TODO teste apenas com subclassof
+        //properties.add("rdf:type");
         properties.add("rdfs:subClassOf");
         
 		HashMap<String, String> prefixes = new HashMap<>();
