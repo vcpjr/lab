@@ -39,15 +39,15 @@ public class BridgesFileReader {
 				Row currentRow = iterator.next();
 
 				if(currentRow != null & currentRow.toString() != null){
-					LOG.info("Reading row: " + currentRow.toString());
+					//LOG.info("Reading row: " + currentRow.toString());
 
 					Cell cellURI = currentRow.getCell(6);
 
 					if(cellURI != null && cellURI.toString() != null){
-						LOG.info("Reading cell: " + cellURI.toString());
+						//LOG.info("Reading cell: " + cellURI.toString());
 						String label = cellURI.toString();
 						String uri = cellURI.toString();
-						KGNode node = new KGNode(label, uri);
+						KGNode node = new KGNode(uri);
 						nodes.add(node);
 					}
 				}

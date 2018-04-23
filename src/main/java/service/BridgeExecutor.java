@@ -1,10 +1,13 @@
 package service;
 
 import java.io.File;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -16,12 +19,19 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.SimpleSelector;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import pojo.Facet;
 import pojo.KGNode;
 import util.BridgesFileReader;
+import util.CSVReport;
 
 public class BridgeExecutor {
+	
+    private static final String APP_ROOT = System.getProperty("user.dir");
+    private static final Logger LOG = LoggerFactory.getLogger(BridgeExecutor.class);
+    private static final File outputPath = new File(APP_ROOT,"output");
 
 	// K: Recurso ou classe da DBpedia
 	// V: classe da ontologia de alto nível
@@ -46,21 +56,43 @@ public class BridgeExecutor {
 		this.properties = properties;
 		this.prefixes = prefixes;
 		
-		//TODO usar a consulta para pegar o label
-		String rootLabel = rootURI;
-		root = new KGNode(rootLabel, rootURI);
+		root = new KGNode(rootURI);
 	}
 	
 	public void execute(){
 		//recursive procedure, executes until the final of the nodeFromKG children hierarchy
 		//TODO teste com a raiz variável, de acordo com os termos encontrados em cada tweet
 		// Validar
+		
+		this.checkCompleteNonRecursive(root, null);
+		/*
 		for(KGNode node: nodesFromFile){
 			this.root = node;
-			//this.checkComplete(this.root, null);
-			this.checkCompleteNonRecursive(root, null);
+			this.checkComplete(this.root, null);
+		}
+		*/
+		
+		LOG.info("******************BridgeExecutor execution complete*****************");
+		CSVReport bridgeReport = new CSVReport("Label; URI; Relationship; #children");
+		
+		LOG.info("******************BridgeExecutor CSV generation*****************");
+		String nodeText;
+		for(KGNode n: childrenNonRecursive){
+            nodeText = String.format(Locale.US, "%s;%s;%s;%d", n.getLabel(), n.getUri(), " ", n.getRelationships().size());
+			bridgeReport.append(nodeText);
+			
+			Set<KGNode> nodesRelatedToN = n.getRelationships().keySet();
+			
+			for(KGNode relatedNode: nodesRelatedToN){
+				nodeText = String.format(Locale.US, "%s;%s;%s;%d", n.getLabel(), n.getUri(), n.getRelationships().get(relatedNode), n.getRelationships().size());
+				bridgeReport.append(nodeText);
+			}
 		}
 		
+		String postfixFilename = String.format(Locale.US,"%s.csv",LocalDate.now().toString());
+		bridgeReport.generate(new File(outputPath, "bridges2-" + postfixFilename));
+		
+		LOG.info("******************BridgeExecutor CSV end*****************");
 		
 	}
 	
@@ -71,30 +103,30 @@ public class BridgeExecutor {
 	 * 
 	 * @returns void, but the algorithm populates newBridges and inconsistentBridges maps
 	 */
-	private void checkComplete(KGNode node, String domainClass){
-		
-		ArrayList<KGNode> children = getChildrenFromNodeOnKG(node);
-		
-		for(int i = 0; i< children.size(); i++){
-			KGNode childNode = children.get(i);
-			domainClass = keyBridges.get(childNode);
-			
-			if(domainClass == null){
-				checkComplete(childNode, domainClass);
-			}else{
-				if(keyBridges.containsKey(childNode)){
-					if(keyBridges.get(childNode) != null 
-							&& keyBridges.get(childNode).equals(domainClass)){
-						newBridges.put(childNode, domainClass);
-					}else{
-						inconsistentBridges.put(childNode, domainClass);
-					}
-				}else {//Ainda não tem ponte
-					newBridges.put(childNode, domainClass);
-				}
-			}
-		}
-	}
+//	private void checkComplete(KGNode node, String domainClass){
+//		
+//		ArrayList<KGNode> children = getChildrenFromNodeOnKG(node);
+//		
+//		for(int i = 0; i< children.size(); i++){
+//			KGNode childNode = children.get(i);
+//			domainClass = keyBridges.get(childNode);
+//			
+//			if(domainClass == null){
+//				checkComplete(childNode, domainClass);
+//			}else{
+//				if(keyBridges.containsKey(childNode)){
+//					if(keyBridges.get(childNode) != null 
+//							&& keyBridges.get(childNode).equals(domainClass)){
+//						newBridges.put(childNode, domainClass);
+//					}else{
+//						inconsistentBridges.put(childNode, domainClass);
+//					}
+//				}else {//Ainda não tem ponte
+//					newBridges.put(childNode, domainClass);
+//				}
+//			}
+//		}
+//	}
 	
 	/**
 	 * 
@@ -105,17 +137,11 @@ public class BridgeExecutor {
 	 */
 	private void checkCompleteNonRecursive(KGNode node, String domainClass){
 		
-		ArrayList<KGNode> children = getChildrenFromNodeOnKG(node);
+		LOG.info("CheckComplete non recursive");
+		populateChildrenFromNodeOnKG(node);
 		
-		//TODO melhorar caso funcione
-		for (KGNode n: children) {
-			if(!this.childrenNonRecursive.contains(n)){
-				this.childrenNonRecursive.add(n);
-			}
-		}
-		
-		for(int i = 0; i< children.size(); i++){
-			KGNode childNode = children.get(i);
+		for(int i = 0; i< childrenNonRecursive.size(); i++){
+			KGNode childNode = childrenNonRecursive.get(i);
 			domainClass = keyBridges.get(childNode);
 			
 			if(keyBridges.containsKey(childNode)){
@@ -129,6 +155,7 @@ public class BridgeExecutor {
 				newBridges.put(childNode, domainClass);
 			}
 		}
+		LOG.info("End CheckComplete non recursive");
 	}
 
 	/**
@@ -137,13 +164,18 @@ public class BridgeExecutor {
 	 *  
 	 * @return a list from the direct children from nodeFromKG 
 	 */
-	private ArrayList<KGNode> getChildrenFromNodeOnKG(KGNode nodeFromKG) {
+	private void populateChildrenFromNodeOnKG(KGNode nodeFromKG) {
 		
-		ArrayList<KGNode> children = new ArrayList<>();
+		LOG.info("****************** Populate nodes from KG ********************");
+		
+    	if(!childrenNonRecursive.contains(nodeFromKG)){
+    		LOG.info("** Add root: " + nodeFromKG.getLabel());
+    		childrenNonRecursive.add(nodeFromKG);
+    	}
 		//Testar com todas as propriedades?
 		
 		//TODO como identificar uma folha na hierarquia?
-		// 1 - Verificar de contém a propriedade rdf-schema#domain
+		// 1 - Verificar se contém a propriedade rdf-schema#domain
 		// Entidades não tem domínio!!
 		String queryPrefix = "";
 		
@@ -155,33 +187,51 @@ public class BridgeExecutor {
 		for(String property: properties){
 			//consulta que retorna o label dos filhos de um determinado nodo pai, dada uma relação
 			String querySPARQL =  queryPrefix + 
-					
 					" select ?pai ?filho " + 
-					" where {?filho " + property + " ?pai . ?pai rdfs:label \"agent\"@en } LIMIT 100";
+					" where {?filho " + property + " ?pai . ?pai rdfs:label \""+ nodeFromKG.getLabel() +"\"@en } LIMIT 100";
 			
 			
 			Query query = QueryFactory.create(querySPARQL);
 			QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
-
+			
 			try {
 			    ResultSet results = qexec.execSelect();
-			    
-			    //TODO incluir as relações para KGNode atual
-		    	System.out.println(results.toString());
+		    	//System.out.println(results.toString());
 			    
 			    while(results.hasNext()) {
-			    	System.out.println(results.next().toString());
+			    	String adjacentURI = results.next().toString();
+			    	String[] res = adjacentURI.split("filho = <");
+			    	res = res[1].split(">");
+			    	
+			    	adjacentURI = res[0];
+			    	res = adjacentURI.split("http://dbpedia.org/");
+			    	
+			    	String adjacentLabel = "";
+					if(res != null && res.length > 1){
+			    		adjacentLabel  = res[1];
+			    	}
+			    	
+			    	KGNode adjacent = new KGNode(adjacentURI);
+			    	//adjacent.setIndirectHits(nodeFromKG.getDirectHits() + nodeFromKG.getIndirectHits());
+			    	
+			    	adjacent.addRelationship(property, nodeFromKG);
+			    	
+			    	//TODO como contar os hits?
+			    	//TODO confirmar
+			    	if(childrenNonRecursive.contains(adjacent)){
+			    		adjacent.setIndirectHits(adjacent.getIndirectHits() + nodeFromKG.getDirectHits() + nodeFromKG.getIndirectHits() + 1);
+			    	}else{
+			    		adjacent.setIndirectHits(adjacent.getIndirectHits() + 1);
+			    		childrenNonRecursive.add(adjacent);
+			    		LOG.info("** Add child: " + adjacent.getLabel());
+			    	}
 			    }
 			} 
 			finally {
 			   qexec.close();
 			}
-			if(!children.contains(nodeFromKG)){
-				children.add(nodeFromKG);
-			}
+			
 		}
-	
-		return children;
 	}
 	
 	// TODO rever as entradas

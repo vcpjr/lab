@@ -13,12 +13,14 @@ public class KGNode {
 
 	private String label;
 	private String uri;
+	private int directHits;
+	private int indirectHits;
 	private Map<KGNode, String> relationships;
 	
 	public KGNode() {
 		
 	}
-
+	
 	public String getLabel() {
 		return label;
 	}
@@ -49,10 +51,28 @@ public class KGNode {
 		}
 	}
 
-	public KGNode(String label, String uri) {
+	public KGNode(String uri) {
 		super();
-		this.label = label;
+		
+		String[] partsURI = uri.split("/");
+		this.label = partsURI[partsURI.length - 1];
 		this.uri = uri;
 		this.relationships = new HashMap<>();
+	}
+
+	public int getDirectHits() {
+		return directHits;
+	}
+
+	public void setDirectHits(int directHits) {
+		this.directHits = directHits;
+	}
+
+	public int getIndirectHits() {
+		return indirectHits;
+	}
+
+	public void setIndirectHits(int indirectHits) {
+		this.indirectHits = indirectHits;
 	}
 }
