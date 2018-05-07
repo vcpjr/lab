@@ -55,7 +55,8 @@ public class KGNode {
 		super();
 		
 		String[] partsURI = uri.split("/");
-		this.label = partsURI[partsURI.length - 1];
+		//TODO como pegar o label correto? Usar uma consulta SPARQL?
+		this.label = String.format("%s", partsURI[partsURI.length - 1]).toLowerCase();
 		this.uri = uri;
 		this.relationships = new HashMap<>();
 	}
