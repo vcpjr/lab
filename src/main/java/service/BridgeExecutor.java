@@ -78,20 +78,34 @@ public class BridgeExecutor {
 		LOG.info("************ Inconsistent Bridges: " + this.inconsistentBridges.size());
 
 
-		CSVReport bridgeReport = new CSVReport("DBpediaClass; #Direct Hits; #Indirect Hits; GoodRelations (gr:) class; Type");
+		generateReportCSV();
+	}
+
+	private void generateReportCSV() {
+		CSVReport bridgeReport = new CSVReport("DBpediaClass; #Direct Hits; #Indirect Hits (Type); #Indirect Hits (Subclass); GoodRelations (gr:) class; Type");
 
 		LOG.info("******************BridgeExecutor keyBridges CSV generation*****************");
 		String nodeText;
-
+		
+		HashMap<KGNode, String> allBridges = new HashMap<>();
+		
+		//TODO testar
 		for(KGNode n: keyBridges.keySet()){
-			System.out.println(n.toString());
-			nodeText = String.format(Locale.US, "%s;%d;%d;%s;%s", n.getLabel(), n.getDirectHits(), n.getIndirectHits(), keyBridges.get(n), "Original Key Bridge");
-			bridgeReport.append(nodeText);
+			LOG.info("add key bridge: " + n.toString());
+			n.setBridgeType("Key Bridge");
+			allBridges.put(n, keyBridges.get(n));
 		}
+		
+		for(KGNode n: newBridges.keySet()){
+			//LOG.info("add new bridge: " + n.toString());
+			n.setBridgeType("New Bridge");
+			allBridges.put(n, keyBridges.get(n));
+		}
+		
 		LOG.info("******************BridgeExecutor newBridges CSV generation*****************");
 
-		for(KGNode n: newBridges.keySet()){
-			nodeText = String.format(Locale.US, "%s;%d;%d;%s;%s", n.getLabel(), n.getDirectHits(), n.getIndirectHits(), newBridges.get(n), "New Bridge");
+		for(KGNode n: allBridges.keySet()){
+			nodeText = String.format(Locale.US, "%s;%d;%d;%d;%s;%s", n.getLabel(), n.getDirectHits(), n.getIndirectHitsType(), n.getIndirectHitsSubclassOf(), newBridges.get(n), n.getBridgeType());
 			bridgeReport.append(nodeText);
 			/*
 			Set<KGNode> nodesRelatedToN = n.getRelationships().keySet();
@@ -106,6 +120,7 @@ public class BridgeExecutor {
 
 		LOG.info("***************************BridgeExecutor CSV end**************************");
 
+		
 	}
 
 	/**
@@ -200,9 +215,9 @@ public class BridgeExecutor {
 						if(containsLabel(children, adjacentLabel)){
 							//TODO verificar a contagem de hits
 							//							LOG.info("** CONTAINS LABEL: " + adjacent.getLabel());
-							adjacent.setIndirectHits(adjacent.getIndirectHits() + node.getDirectHits() + node.getIndirectHits() + 1);
+							//adjacent.setIndirectHits(adjacent.getIndirectHits() + node.getDirectHits() + node.getIndirectHits() + 1);
 						}else{
-							adjacent.setIndirectHits(adjacent.getIndirectHits() + 1);
+							//adjacent.setIndirectHits(adjacent.getIndirectHits() + 1);
 							children.add(adjacent);
 							//							LOG.info("** Add child: " + adjacent.getLabel());
 						}

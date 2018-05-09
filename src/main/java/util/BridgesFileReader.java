@@ -46,9 +46,7 @@ public class BridgesFileReader {
 
 					Cell cellClassName = currentRow.getCell(0);
 					Cell cellHits = currentRow.getCell(1);
-					//TODO tratar as dúvidas no mapeamento (mais de uma classe?)
 					Cell cellGoodRelationsClass = currentRow.getCell(2);
-					
 					
 //					Tweet t;
 //					if(cellTweetText != null && cellTweetText.toString() != null){
@@ -62,6 +60,7 @@ public class BridgesFileReader {
 						//LOG.info("Reading cell: " + cellURI.toString());
 						KGNode node = getNodeFromClassName(cellClassName.toString());
 						if(node != null) {
+							//TODO pegar hits diretos e hits por type
 							node.setDirectHits((int) cellHits.getNumericCellValue());
 							
 							if(cellGoodRelationsClass != null && cellGoodRelationsClass.toString() != null

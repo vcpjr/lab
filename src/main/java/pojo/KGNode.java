@@ -11,17 +11,13 @@ import java.util.Map;
  */
 public class KGNode {
 
-	@Override
-	public String toString() {
-		return "KGNode [label=" + label + ", uri=" + uri + ", directHits=" + directHits + ", indirectHits="
-				+ indirectHits + ", relationships=" + relationships + "]";
-	}
-
 	private String label;
 	private String uri;
 	private int directHits;
-	private int indirectHits;
+	private int indirectHitsType;
+	private int indirectHitsSubclassOf;
 	private Map<KGNode, String> relationships;
+	private String bridgeType; //key, new, inconsistent
 
 	public KGNode() {
 
@@ -75,14 +71,6 @@ public class KGNode {
 		this.directHits = directHits;
 	}
 
-	public int getIndirectHits() {
-		return indirectHits;
-	}
-
-	public void setIndirectHits(int indirectHits) {
-		this.indirectHits = indirectHits;
-	}
-
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -100,5 +88,36 @@ public class KGNode {
 		       int result = uri != null ? uri.hashCode() : 0;
 		       result = 31 * result;
 		       return result;
+		}
+
+		public int getIndirectHitsType() {
+			return indirectHitsType;
+		}
+
+		public void setIndirectHitsType(int indirectHitsType) {
+			this.indirectHitsType = indirectHitsType;
+		}
+
+		public int getIndirectHitsSubclassOf() {
+			return indirectHitsSubclassOf;
+		}
+
+		public void setIndirectHitsSubclassOf(int indirectHitsSubclassOf) {
+			this.indirectHitsSubclassOf = indirectHitsSubclassOf;
+		}
+
+		@Override
+		public String toString() {
+			return "KGNode [label=" + label + ", uri=" + uri + ", directHits=" + directHits + ", indirectHitsType="
+					+ indirectHitsType + ", indirectHitsSubclassOf=" + indirectHitsSubclassOf + ", relationships="
+					+ relationships + "]";
+		}
+
+		public String getBridgeType() {
+			return bridgeType;
+		}
+
+		public void setBridgeType(String bridgeType) {
+			this.bridgeType = bridgeType;
 		}
 }
