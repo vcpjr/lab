@@ -11,16 +11,22 @@ import java.util.Map;
  */
 public class KGNode {
 
+	@Override
+	public String toString() {
+		return "KGNode [label=" + label + ", uri=" + uri + ", directHits=" + directHits + ", indirectHits="
+				+ indirectHits + ", relationships=" + relationships + "]";
+	}
+
 	private String label;
 	private String uri;
 	private int directHits;
 	private int indirectHits;
 	private Map<KGNode, String> relationships;
-	
+
 	public KGNode() {
-		
+
 	}
-	
+
 	public String getLabel() {
 		return label;
 	}
@@ -44,7 +50,7 @@ public class KGNode {
 	public void setRelationships(Map<KGNode, String> relationships) {
 		this.relationships = relationships;
 	}
-	
+
 	public void addRelationship(String type, KGNode otherNode){
 		if(!this.relationships.containsKey(otherNode)){
 			relationships.put(otherNode, type);
@@ -53,10 +59,10 @@ public class KGNode {
 
 	public KGNode(String uri) {
 		super();
-		
-		String[] partsURI = uri.split("/");
-		//TODO como pegar o label correto? Usar uma consulta SPARQL?
-		this.label = String.format("%s", partsURI[partsURI.length - 1]).toLowerCase();
+
+		//TODO teste
+		//this.label = String.format("%s", label).toLowerCase();
+		this.label = uri;
 		this.uri = uri;
 		this.relationships = new HashMap<>();
 	}
@@ -76,4 +82,23 @@ public class KGNode {
 	public void setIndirectHits(int indirectHits) {
 		this.indirectHits = indirectHits;
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		KGNode node = (KGNode) o;
+
+		if (uri != node.uri) return false;
+
+		return uri != null ? uri.equals(node.uri) : node.uri == null;
+	}
+
+		@Override
+		public int hashCode() {
+		       int result = uri != null ? uri.hashCode() : 0;
+		       result = 31 * result;
+		       return result;
+		}
 }

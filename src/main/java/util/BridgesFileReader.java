@@ -27,6 +27,7 @@ public class BridgesFileReader {
 		HashMap<KGNode, String> bridges = null;
 		String filename = file.getName();
 		try {
+			
 			LOG.info("Reading KG nodes from '" + filename + "' file.");
 			bridges = new HashMap<>();
 
@@ -36,35 +37,39 @@ public class BridgesFileReader {
 
 			//Pula o cabeçalho
 			iterator.next();
+			iterator.next();
 			while (iterator.hasNext()) {
 				Row currentRow = iterator.next();
 
 				if(currentRow != null & currentRow.toString() != null){
 					//LOG.info("Reading row: " + currentRow.toString());
 
-					Cell cellTweetId = currentRow.getCell(0);
-					Cell cellTweetUserId = currentRow.getCell(1);
-					Cell cellTweetText = currentRow.getCell(2);
-					Cell cellURI = currentRow.getCell(6);
-					Cell cellChosenClass = currentRow.getCell(7);
+					Cell cellClassName = currentRow.getCell(0);
+					Cell cellHits = currentRow.getCell(1);
+					//TODO tratar as dúvidas no mapeamento (mais de uma classe?)
+					Cell cellGoodRelationsClass = currentRow.getCell(2);
+					
+					
+//					Tweet t;
+//					if(cellTweetText != null && cellTweetText.toString() != null){
+//						boolean isRetweet = cellTweetText.toString().contains("RT ");
+//						//TODO pegar demais dados da planilha (id, userId, creationDate, isRetweet)
+//						//TODO associar os tweets às anotações?
+//						t = new Tweet(1L, 1L, cellTweetText.toString(), new Date(), isRetweet);
+//					}
 
-					Tweet t;
-					if(cellTweetText != null && cellTweetText.toString() != null){
-						boolean isRetweet = cellTweetText.toString().contains("RT ");
-						//TODO pegar demais dados da planilha (id, userId, creationDate, isRetweet)
-						//TODO associar os tweets às anotações?
-						t = new Tweet(1L, 1L, cellTweetText.toString(), new Date(), isRetweet);
-					}
-
-					if(cellURI != null && cellURI.toString() != null &&
-							cellChosenClass != null && cellChosenClass.toString() != null){
+					if(cellClassName != null && cellClassName.toString() != null){
 						//LOG.info("Reading cell: " + cellURI.toString());
-						String uri = cellURI.toString();
-						KGNode node = new KGNode(uri);
-						bridges.put(node, cellChosenClass.toString());
+						KGNode node = getNodeFromClassName(cellClassName.toString());
+						if(node != null) {
+							node.setDirectHits((int) cellHits.getNumericCellValue());
+							
+							if(cellGoodRelationsClass != null && cellGoodRelationsClass.toString() != null
+									&& !cellGoodRelationsClass.toString().isEmpty()) {
+								bridges.put(node, cellGoodRelationsClass.toString());
+							}
+						}
 					}
-
-
 				}
 			}
 		} catch (FileNotFoundException e) {
@@ -77,5 +82,34 @@ public class BridgesFileReader {
 
 		LOG.info("Read " + bridges.size() + " Key Bridges from file.");
 		return bridges;
+	}
+
+	private static KGNode getNodeFromClassName(String className) {
+			
+		//DBpedia:Organisation, Schema:Agent....
+		String[] parts = className.split(":");
+		
+		String uri = null;
+		KGNode node = null;
+		if(parts != null && parts.length == 2) {
+			switch (parts[0]) {
+			case "DBpedia":
+				uri = "http://dbpedia.org/ontology/";
+				break;
+				
+			case "Schema":
+				uri = "http://schema.org/";
+				break;
+
+			default:
+				break;
+			}
+			uri += parts[1];
+			
+			//node = new KGNode(uri, parts[1]);
+			node = new KGNode(uri);
+		}
+
+		return node;
 	}
 }

@@ -39,6 +39,10 @@ public class NerdExecutor {
         CSVReport resourceReport = new CSVReport("Tweet id(#); User id; Text; Confidence; Resource URI");
         CSVReport classReport = new CSVReport("Tweet id(#); User id; Text; Confidence; Classes");
 
+        //TODO confirmar a contagem de HITS
+        //Diretos: menções a instâncias
+        //Indiretos por Type: uma classe diretamente relacionada à uma instância
+        //Indiretos por Subclass-Of: uma classe é relacionada através de uma relação de subsumption até uma classe type de uma instância
         for(int i = 0; i < tweets.size(); ++i) {
             try {
             	Tweet t = tweets.get(i);
