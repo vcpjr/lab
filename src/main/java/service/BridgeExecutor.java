@@ -190,7 +190,7 @@ public class BridgeExecutor {
 					" select ?filho " + 
 					" where {?filho " + property + " <" + node.getUri() + ">}";
 
-
+			//TODO fazer consulta local (no TDB)
 			Query query = QueryFactory.create(querySPARQL);
 			QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
 

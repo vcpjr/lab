@@ -39,10 +39,26 @@ public class NerdExecutor {
         CSVReport resourceReport = new CSVReport("Tweet id(#); User id; Text; Confidence; Resource URI");
         CSVReport classReport = new CSVReport("Tweet id(#); User id; Text; Confidence; Classes");
 
-        //TODO confirmar a contagem de HITS
+        //TODO confirmar a contagem de HITS (criar KGNode? Salvar no banco?)
         //Diretos: menções a instâncias
         //Indiretos por Type: uma classe diretamente relacionada à uma instância
         //Indiretos por Subclass-Of: uma classe é relacionada através de uma relação de subsumption até uma classe type de uma instância
+        
+        /*
+         * Exemplo: 
+         * 
+         * Resource(directHits, indirectHitsType, indirectHitsSubclassOf)
+         * 			
+         *    	 Thing(0,0,2)
+         *	       |
+         *	     Person(0,0,2)
+         *	       |
+         *	     Singer(0,2,0)
+         *    	/             \
+         * Selena(1,0,0)	 Anitta(1,0,0)			   
+         * 
+         * */
+        
         for(int i = 0; i < tweets.size(); ++i) {
             try {
             	Tweet t = tweets.get(i);

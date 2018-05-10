@@ -5,7 +5,7 @@ import java.util.Map;
 
 /**
  * 
- * Represents a Knowledge Graph Node (i.g., a class or resource on DBpedia)
+ * Represents a Knowledge Graph Node (i.g., a class or instance on DBpedia)
  * @author vilmar
  *
  */
@@ -83,41 +83,41 @@ public class KGNode {
 		return uri != null ? uri.equals(node.uri) : node.uri == null;
 	}
 
-		@Override
-		public int hashCode() {
-		       int result = uri != null ? uri.hashCode() : 0;
-		       result = 31 * result;
-		       return result;
-		}
+	@Override
+	public int hashCode() {
+		int result = uri != null ? uri.hashCode() : 0;
+		result = 31 * result;
+		return result;
+	}
 
-		public int getIndirectHitsType() {
-			return indirectHitsType;
-		}
+	public int getIndirectHitsType() {
+		return indirectHitsType;
+	}
 
-		public void setIndirectHitsType(int indirectHitsType) {
-			this.indirectHitsType = indirectHitsType;
-		}
+	public void setIndirectHitsType(int indirectHitsType) {
+		this.indirectHitsType = indirectHitsType;
+	}
 
-		public int getIndirectHitsSubclassOf() {
-			return indirectHitsSubclassOf;
-		}
+	public int getIndirectHitsSubclassOf() {
+		return indirectHitsSubclassOf;
+	}
 
-		public void setIndirectHitsSubclassOf(int indirectHitsSubclassOf) {
-			this.indirectHitsSubclassOf = indirectHitsSubclassOf;
-		}
+	public void setIndirectHitsSubclassOf(int indirectHitsSubclassOf) {
+		this.indirectHitsSubclassOf = indirectHitsSubclassOf;
+	}
 
-		@Override
-		public String toString() {
-			return "KGNode [label=" + label + ", uri=" + uri + ", directHits=" + directHits + ", indirectHitsType="
-					+ indirectHitsType + ", indirectHitsSubclassOf=" + indirectHitsSubclassOf + ", relationships="
-					+ relationships + "]";
-		}
+	@Override
+	public String toString() {
+		return "KGNode [label=" + label + ", uri=" + uri + ", directHits=" + directHits + ", indirectHitsType="
+				+ indirectHitsType + ", indirectHitsSubclassOf=" + indirectHitsSubclassOf + ", relationships="
+				+ relationships + "]";
+	}
 
-		public String getBridgeType() {
-			return bridgeType;
-		}
+	public String getBridgeType() {
+		return bridgeType;
+	}
 
-		public void setBridgeType(String bridgeType) {
-			this.bridgeType = bridgeType;
-		}
+	public void setBridgeType(String bridgeType) {
+		this.bridgeType = bridgeType;
+	}
 }
