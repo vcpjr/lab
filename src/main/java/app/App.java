@@ -9,13 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pojo.KGNode;
-import service.BridgeExecutor;
+import service.NerdExecutor;
 
 public class App {
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) {
-
+    	
         if (args.length < 3) {
             System.err.println("Parameters not found. For run this application use follow command.");
             System.out.println("./run.sh <dataset> <confidence_level> <language>\n");
@@ -34,13 +34,14 @@ public class App {
             System.exit(1);
         }
         
-        /*
-         * TODO rever a contagem de hits
+        
+        // TODO rever a contagem de hits
         //STEP 1: SEMANTIC ENRICHMENT AND ACCOUNTING
         NerdExecutor nerdExecutor = new NerdExecutor(inputFile);
         nerdExecutor.execute(confidence, language);
-        */
         
+        
+    	/*
         //STEP 2: SEMANTIC DATA CUBE CONSTRUCTION
         ArrayList<String> properties = new ArrayList<>();
         
@@ -54,7 +55,7 @@ public class App {
 		
 		BridgeExecutor bridgeService = new BridgeExecutor(prefixes, properties, inputFile);
 		bridgeService.execute();
-        
+        */
 		/*
 		//TODO create the final step
 		//SemanticDataCubeExecutor semanticDataCubeExecutor = new SemanticDataCubeExecutor(hierarchyFile);

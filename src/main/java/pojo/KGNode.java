@@ -108,9 +108,7 @@ public class KGNode {
 
 	@Override
 	public String toString() {
-		return "KGNode [label=" + label + ", uri=" + uri + ", directHits=" + directHits + ", indirectHitsType="
-				+ indirectHitsType + ", indirectHitsSubclassOf=" + indirectHitsSubclassOf + ", relationships="
-				+ relationships + "]";
+		return this.uri + " (" + this.directHits + "," + this.indirectHitsType + "," + this.indirectHitsSubclassOf + ")";  
 	}
 
 	public String getBridgeType() {

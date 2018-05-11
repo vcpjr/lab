@@ -27,7 +27,12 @@ public class TweetFileReader {
             tweets = new ArrayList<>();
             while (br.ready()) {
             	//TODO alterar aqui para pegar os demais campos do tweet (lendo do JSON)
-				tweets.add(JsonConverter.toTweet(normalize(br.readLine())));
+				//tweets.add(JsonConverter.toTweet(normalize(br.readLine())));
+            	String text = br.readLine();
+            	boolean isRT = (text != null) && (text.contains("RT"));
+            	
+            	//Ou usar a linha seguinte caso vá ler o .txt com apenas o tweet em si (dataset_Fabio_bif)
+            	tweets.add(new Tweet(null, null, text, null, isRT));
             }
             br.close();
             fr.close();
