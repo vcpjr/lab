@@ -1,0 +1,35 @@
+CREATE TABLE `mestrado`.`KGNODE` (
+  `id` INT NOT NULL,
+  `label` VARCHAR(400) NULL,
+  `uri` VARCHAR(400) NULL,
+  `directHits` INT NULL,
+  `indirectHitsType` INT NULL,
+  `indirectHitsSubclassOf` INT NULL,
+  PRIMARY KEY (`id`));
+  
+  ALTER TABLE `mestrado`.`KGNODE` 
+CHANGE COLUMN `id` `id` INT(11) NOT NULL AUTO_INCREMENT ;
+
+CREATE TABLE `mestrado`.`KGNODE_SUBCLASS` (
+  `ID` INT NOT NULL AUTO_INCREMENT,
+  `IDNODE` INT NOT NULL,
+  `IDSUBCLASS` INT NOT NULL,
+  PRIMARY KEY (`ID`));
+  
+  CREATE TABLE `mestrado`.`KGNODE_TYPE` (
+  `ID` INT NOT NULL AUTO_INCREMENT,
+  `IDNODE` INT NOT NULL,
+  `IDTYPE` INT NOT NULL,
+  PRIMARY KEY (`ID`));
+
+
+  
+  %%%%%%
+  select * from KGNODE;
+KGNODE_SUBCLASSselect * from KGNODE_SUBCLASS;
+
+delete from KGNODE where id > 0;
+delete from KGNODE_SUBCLASS where id > 0;
+
+
+UPDATE KGNode (LABEL, URI, DIRECTHITS, INDIRECTHITSTYPE, INDIRECTHITSSUBCLASSOF) SET ('TESTE', 'TESTE', 1, 1, 1);

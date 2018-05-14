@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonSyntaxException;
 
+import dao.KGNodeDAO;
 import pojo.KGNode;
 import pojo.Tweet;
 import pojo.dbpediaspotlight.Annotation;
@@ -28,6 +29,7 @@ public class NerdExecutor {
 	private static final String RELATIONSHIP_INSTANCE = "instance";
 	private static final String RELATIONSHIP_TYPE_OF = "type_of";
 	private static final String RELATIONSHIP_SUBCLASS_OF = "subclass_of";
+	private static final String URL_ROOT = "owl:Thing";
 	
 	
     private static final String APP_ROOT = System.getProperty("user.dir");
@@ -41,7 +43,6 @@ public class NerdExecutor {
     public NerdExecutor(File datasetFile) {
         rest = new SpotlightRest();
         tweets = TweetFileReader.readTweetsFromFile(datasetFile);
-
         String filePath = datasetFile.getName();
         inputFilename = filePath.split("\\.")[0];
     }
@@ -79,27 +80,34 @@ public class NerdExecutor {
          * 
          * */
         
-    	ArrayList<KGNode> resources = new ArrayList<>(); //instances or classes
+    	KGNodeDAO dao = new KGNodeDAO();
+    	ArrayList<Integer> annotatedInstanceIds = new ArrayList<>();
         for(int i = 0; i < tweets.size(); ++i) {
             try {
             	Tweet t = tweets.get(i);
                 final Annotation annotated = rest.getAnnotation(t.getText(), confidence, language);
                 annotated.getResources().forEach(resource -> {
 	            	String uri = resource.getURI();
-	            	KGNode nodeInstance = getKGNode(resources, uri, RELATIONSHIP_INSTANCE, 1);
-	            	addResource(resources, nodeInstance);
-                    	
+	            	KGNode nodeInstance = getKGNode(uri, RELATIONSHIP_INSTANCE, 1);
+	            	
+	            	int nodeInstanceId = dao.insert(nodeInstance);
+	            	annotatedInstanceIds.add(nodeInstanceId);
+	            	
+	            	System.out.println("Instance: " + uri);
                     resource.getTypes().forEach(classType-> {
-                    	String dbpediaURI = getDBpediaClassURI(classType);
-                    		
-                		if(dbpediaURI != null){
-                			KGNode nodeClassType = getKGNode(resources, getDBpediaClassURI(classType), RELATIONSHIP_TYPE_OF, 1);
-                			addResource(resources, nodeClassType);
+                    	String dbpediaTypeURI = getDBpediaClassURI(classType);
+                    	System.out.println("Type: " + dbpediaTypeURI);
+                    	
+                    	if(dbpediaTypeURI != null){
+                			KGNode nodeClassType = getKGNode(dbpediaTypeURI, RELATIONSHIP_TYPE_OF, 1);
+                			int classTypeId = dao.insertType(nodeInstanceId, nodeClassType);
+                			System.out.println("INSERT (Type, Instance): (" + nodeClassType.getUri() +"," + nodeInstance.getUri() + ")" );
                 			
                 			ArrayList<KGNode> subclasses = getSubclassesOf(nodeClassType);
                 			subclasses.forEach(subclass ->{
-                				KGNode nodeClassSubclassOf = getKGNode(resources, subclass.getUri(), RELATIONSHIP_SUBCLASS_OF, 1);
-                				addResource(resources, nodeClassSubclassOf);
+                				System.out.println("Subclass: " + subclass.getUri());
+                				KGNode nodeClassSubclassOf = getKGNode(subclass.getUri(), RELATIONSHIP_SUBCLASS_OF, 1);
+                				dao.insertSubclass(classTypeId, nodeClassSubclassOf);
                 			});
                 		}
                 	});
@@ -116,33 +124,50 @@ public class NerdExecutor {
             }
         }
 
-        generateReportCSV(resources, language, confidence);
+        generateReportCSV(annotatedInstanceIds, language, confidence);
     }
 
-    private ArrayList<KGNode> getSubclassesOf(KGNode nodeClassType) {
+	private ArrayList<KGNode> getSubclassesOf(KGNode nodeClassType) {
     	ArrayList<KGNode> subclasses = new ArrayList<>();
     		
     	String querySPARQL =  getQueryPrefix() + 
-    			" select ?filho " + 
-    			" where {?filho rdfs:subClassOf <" + nodeClassType.getUri() + ">}";
+    			" select ?subclass " + 
+    			" where {<" + nodeClassType.getUri() + "> rdfs:subClassOf ?subclass}";
 
     	Query query = QueryFactory.create(querySPARQL);
     	QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
+    	String msg = "Subclasses of " + nodeClassType.getLabel() + "\n";
     	try {
     		ResultSet results = qexec.execSelect();
 
     		while(results.hasNext()) {
+    			boolean addSubclass = false;
     			String adjacentURI = results.next().toString();
-    			String[] res = adjacentURI.split("filho = <");
-    			res = res[1].split(">");
-    			adjacentURI = res[0];
+   
+    			if(!adjacentURI.contains(URL_ROOT)){
+    				if(adjacentURI.contains("dbpedia")){
+    					String[] res = adjacentURI.split("subclass = <");
+    					res = res[1].split(">");
+    					adjacentURI = res[0];
+    					addSubclass = true;
+    				}
+    			}else{
+    				adjacentURI = URL_ROOT;
+    				addSubclass = true;
+    			}
 
     			KGNode subclass = new KGNode(adjacentURI);
-    			subclasses.add(subclass);
+    			if(!containsLabel(subclasses, subclass.getLabel()) && addSubclass){
+    				subclasses.add(subclass);
+    				msg += "- " + subclass.getLabel() + "\n"; 
+    			}
+    			
     		}
     	}finally {
     		qexec.close();
     	}
+    	msg += "-------------------------------------";
+    	System.out.println(msg);
     	return subclasses;
     }
 
@@ -152,6 +177,8 @@ public class NerdExecutor {
 		
 		if(parts != null && parts.length == 2){
 			uri = "http://dbpedia.org/ontology/" + parts[1];
+		}else if (label.contains("Thing")){
+			uri = URL_ROOT;
 		}
 		return uri;
 	}
@@ -170,21 +197,29 @@ public class NerdExecutor {
 		return queryPrefix;
 	}
 
-	private void addResource(ArrayList<KGNode> resources, KGNode resource) {
-    	if(!resources.contains(resource) || !containsLabel(resources, resource.getLabel())){
-			resources.add(resource);
-		}
-	}
-
-	private void generateReportCSV(ArrayList<KGNode> resources, String language, float confidence) {
+	private void generateReportCSV(ArrayList<Integer> instanceIds, String language, float confidence) {
     	CSVReport nerdReport = new CSVReport("Resource; #Direct Hits; #Indirect Hits (Type); #Indirect Hits (Subclass)");
-
+    	KGNodeDAO dao = new KGNodeDAO();
+    	
     	LOG.info("******************NerdExecutor CSV generation*****************");
     	String nodeText;
 
-    	for(KGNode n: resources){
+    	for(Integer id: instanceIds){
+    		KGNode n = dao.getById(id);
     		nodeText = String.format(Locale.US, "%s;%d;%d;%d", n.getLabel(), n.getDirectHits(), n.getIndirectHitsType(), n.getIndirectHitsSubclassOf());
     		nerdReport.append(nodeText);
+    		
+    		ArrayList<KGNode> types = dao.getTypesByInstanceId(n.getId());
+    		for(KGNode type: types){
+    			nodeText = String.format(Locale.US, "%s;%d;%d;%d", type.getLabel(), type.getDirectHits(), type.getIndirectHitsType(), type.getIndirectHitsSubclassOf());
+        		nerdReport.append(nodeText);
+        		
+    			ArrayList<KGNode> subclasses = dao.getSuperclassesPath(n.getId(), null);
+    			for(KGNode subclass: subclasses){
+    				nodeText = String.format(Locale.US, "%s;%d;%d;%d", subclass.getLabel(), subclass.getDirectHits(), subclass.getIndirectHitsType(), subclass.getIndirectHitsSubclassOf());
+    	    		nerdReport.append(nodeText);
+    			}
+    		}
     	}
     	String postfixFilename = String.format(
     			Locale.US,
@@ -199,12 +234,12 @@ public class NerdExecutor {
     	LOG.info("***************************NerdExecutor CSV end**************************");
     }
 
-	private KGNode getKGNode(ArrayList<KGNode> resources, String uri, String relationship, int hits) {
+	private KGNode getKGNode(String uri, String relationship, int hits) {
 		
-		KGNode resource;
-		if(containsLabel(resources, uri)){
-			resource = findByURI(resources, uri);
-		}else{
+		KGNodeDAO dao = new KGNodeDAO();
+		KGNode resource = dao.getByURI(uri);
+		
+		if(resource == null){
 			resource = new KGNode(uri);
 		}
 		
@@ -220,7 +255,7 @@ public class NerdExecutor {
 			break;	
 		}
 		
-		System.out.println("addResource: " + resource.toString());
+		System.out.println("addResource: " + resource.toString() + "---" + relationship);
 		return resource;
 	}
 

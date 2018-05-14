@@ -7,11 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.ResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,20 +38,15 @@ public class BridgeExecutor {
 	private final HashMap<KGNode, String> keyBridges;
 	private final HashMap<KGNode, String> newBridges;
 	private final HashMap<KGNode, String> inconsistentBridges;
-
-	private final HashMap<String, String> prefixes; //K: prefix (rdf); V: uri (http://www.w3.org/2000/01/rdf-schema#)
-	private final ArrayList<String> properties; //rdf:type or rdfs:subClassOf
-	private final ArrayList<KGNode> visitedNodes;
-
+	
+    private final HashMap<KGNode, List<KGNode>> mapSubclassesOfResource;
 	private KGNode root;
 
-	public BridgeExecutor(HashMap<String, String> prefixes, ArrayList<String> properties, File datasetFile){
+	public BridgeExecutor(File datasetFile){
 		keyBridges = BridgesFileReader.readKeyBridgesFromFile(datasetFile);
 		newBridges = new HashMap<>();
 		inconsistentBridges = new HashMap<>();
-		this.properties = properties;
-		this.prefixes = prefixes;
-		this.visitedNodes = new ArrayList<>();
+		this.mapSubclassesOfResource = null; //TODO pegar do banco/arquivo
 	}
 
 	public void execute(){
@@ -80,16 +70,16 @@ public class BridgeExecutor {
 
 		generateReportCSV();
 	}
-
+	
 	private void generateReportCSV() {
-		CSVReport bridgeReport = new CSVReport("DBpediaClass; #Direct Hits; #Indirect Hits (Type); #Indirect Hits (Subclass); GoodRelations (gr:) class; Type");
+		CSVReport bridgeReport = new CSVReport("Resource; #Direct Hits; #Indirect Hits (Type); #Indirect Hits (Subclass); GoodRelations (gr:) class; Type");
 
 		LOG.info("******************BridgeExecutor keyBridges CSV generation*****************");
 		String nodeText;
 		
 		HashMap<KGNode, String> allBridges = new HashMap<>();
 		
-		//TODO testar
+		//TODO testar e incluir inconsistent
 		for(KGNode n: keyBridges.keySet()){
 			LOG.info("add key bridge: " + n.toString());
 			n.setBridgeType("Key Bridge");
@@ -132,37 +122,24 @@ public class BridgeExecutor {
 	 */
 	private void checkComplete(KGNode node, String domainClass){
 
-		LOG.info("** CheckComplete for node: " + node.getLabel());
-
-		ArrayList<KGNode> children = getChildrenFromNodeOnKG(node);
-
+		ArrayList<KGNode> children = (ArrayList<KGNode>) mapSubclassesOfResource.get(node);
 		List<KGNode> nodesFromKeyBridges = new ArrayList<KGNode>(keyBridges.keySet());
 		
 		if(children.isEmpty()) {
-			//no more classes related ("leaf")
-			LOG.info("** Bridge : "+ node.getLabel() + " -> "+ domainClass + " ADDED");
 			newBridges.put(node, domainClass);
 		}else {
 			for(int i = 0; i< children.size(); i++){
 				KGNode childNode = children.get(i);
 				String childDomainClass = keyBridges.get(childNode);
-				
-				LOG.info("** Domain class: " + domainClass);
-				LOG.info("** Child domain class: " + childDomainClass);
-				
 				if(childDomainClass == null){
-					LOG.info("** Domain class null for node: " + node.getLabel());
 					checkComplete(childNode, domainClass);
 				}else{
-					LOG.info("** Domain class: "+ domainClass + ". Node: " + node.getLabel());
 					if(containsLabel(nodesFromKeyBridges, childNode.getLabel())){
 						LOG.info("** Domain class: "+ domainClass + "exists on keyBridges");
 						if(keyBridges.get(childNode) != null 
 								&& keyBridges.get(childNode).equals(domainClass)){
-							LOG.info("** Bridge : "+ node.getLabel() + " -> "+ domainClass + " ADDED");
 							newBridges.put(childNode, domainClass);
 						}else{
-							LOG.info("** Bridge : "+ node.getLabel() + " -> "+ domainClass + " INCONSISTENT");
 							inconsistentBridges.put(childNode, domainClass);
 						}
 					}else {
@@ -171,68 +148,6 @@ public class BridgeExecutor {
 				}
 			}
 		}
-	}
-
-	private ArrayList<KGNode> getChildrenFromNodeOnKG(KGNode node) {
-
-		ArrayList<KGNode> children = new ArrayList<>();
-
-		//LOG.info("** Looking for child for node: " + node.getLabel());
-		String queryPrefix = "";
-		for(String prefix: prefixes.keySet()){
-			//PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-			queryPrefix += "PREFIX " + prefix + ": <" + prefixes.get(prefix) +  "> \n";
-		}
-
-		for(String property: properties){
-			//consulta que retorna o label dos filhos de um determinado nodo pai, dada uma relação
-			String querySPARQL =  queryPrefix + 
-					" select ?filho " + 
-					" where {?filho " + property + " <" + node.getUri() + ">}";
-
-			//TODO fazer consulta local (no TDB)
-			Query query = QueryFactory.create(querySPARQL);
-			QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
-
-			try {
-				ResultSet results = qexec.execSelect();
-				//System.out.println(results.toString());
-
-				while(results.hasNext()) {
-					String adjacentURI = results.next().toString();
-					String[] res = adjacentURI.split("filho = <");
-					res = res[1].split(">");
-
-					adjacentURI = res[0];
-
-					String adjacentLabel = "";
-					adjacentLabel  = adjacentURI;
-
-					KGNode adjacent = new KGNode(adjacentURI);
-					adjacent.addRelationship(property, node);
-
-					if(!containsLabel(visitedNodes, adjacentLabel)) {
-						if(containsLabel(children, adjacentLabel)){
-							//TODO verificar a contagem de hits
-							//							LOG.info("** CONTAINS LABEL: " + adjacent.getLabel());
-							//adjacent.setIndirectHits(adjacent.getIndirectHits() + node.getDirectHits() + node.getIndirectHits() + 1);
-						}else{
-							//adjacent.setIndirectHits(adjacent.getIndirectHits() + 1);
-							children.add(adjacent);
-							//							LOG.info("** Add child: " + adjacent.getLabel());
-						}
-						visitedNodes.add(adjacent);
-					}
-
-				}
-			} 
-			finally {
-				qexec.close();
-			}
-
-		}
-
-		return children;
 	}
 
 	public boolean containsLabel(final List<KGNode> list, final String label){
