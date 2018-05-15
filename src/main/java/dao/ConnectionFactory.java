@@ -19,7 +19,7 @@ public class ConnectionFactory {
 
 	public Connection obterConexao() {
 		String nomeEsquema = "mestrado";
-		String enderecoBanco = "jdbc:mysql://localhost/" + nomeEsquema;
+		String enderecoBanco = "jdbc:mysql://localhost/" + nomeEsquema + "?autoReconnect=true&useSSL=false";
 		String usuario = "root";
 		String senha = "1234";
 		String driverJDBC = "com.mysql.jdbc.Driver";

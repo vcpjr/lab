@@ -26,12 +26,6 @@ import util.TweetFileReader;
 
 public class NerdExecutor {
 
-	private static final String RELATIONSHIP_INSTANCE = "instance";
-	private static final String RELATIONSHIP_TYPE_OF = "type_of";
-	private static final String RELATIONSHIP_SUBCLASS_OF = "subclass_of";
-	private static final String URL_ROOT = "owl:Thing";
-	
-	
     private static final String APP_ROOT = System.getProperty("user.dir");
     private static final Logger LOG = LoggerFactory.getLogger(NerdExecutor.class);
     private static final File outputPath = new File(APP_ROOT,"output");
@@ -88,29 +82,34 @@ public class NerdExecutor {
                 final Annotation annotated = rest.getAnnotation(t.getText(), confidence, language);
                 annotated.getResources().forEach(resource -> {
 	            	String uri = resource.getURI();
-	            	KGNode nodeInstance = getKGNode(uri, RELATIONSHIP_INSTANCE, 1);
+	            	KGNode nodeInstance = getKGNode(uri, KGNode.RELATIONSHIP_INSTANCE, 1);
 	            	
-	            	int nodeInstanceId = dao.insert(nodeInstance);
-	            	annotatedInstanceIds.add(nodeInstanceId);
-	            	
-	            	System.out.println("Instance: " + uri);
-                    resource.getTypes().forEach(classType-> {
-                    	String dbpediaTypeURI = getDBpediaClassURI(classType);
-                    	System.out.println("Type: " + dbpediaTypeURI);
-                    	
-                    	if(dbpediaTypeURI != null){
-                			KGNode nodeClassType = getKGNode(dbpediaTypeURI, RELATIONSHIP_TYPE_OF, 1);
-                			int classTypeId = dao.insertType(nodeInstanceId, nodeClassType);
-                			System.out.println("INSERT (Type, Instance): (" + nodeClassType.getUri() +"," + nodeInstance.getUri() + ")" );
-                			
-                			ArrayList<KGNode> subclasses = getSubclassesOf(nodeClassType);
-                			subclasses.forEach(subclass ->{
-                				System.out.println("Subclass: " + subclass.getUri());
-                				KGNode nodeClassSubclassOf = getKGNode(subclass.getUri(), RELATIONSHIP_SUBCLASS_OF, 1);
-                				dao.insertSubclass(classTypeId, nodeClassSubclassOf);
-                			});
-                		}
-                	});
+	            	if(nodeInstance != null){
+	            		int directHitsOnInstance = nodeInstance.getDirectHits();
+	            		
+	            		int nodeInstanceId = dao.insert(nodeInstance);
+	            		if(!annotatedInstanceIds.contains(nodeInstanceId)){
+	            			annotatedInstanceIds.add(nodeInstanceId);
+	            		}
+	            		
+	            		resource.getTypes().forEach(classType-> {
+	            			String dbpediaTypeURI = KGNode.getDBpediaClassURI(classType);
+	            			//System.out.println("Type: " + dbpediaTypeURI);
+	            			
+	            			if(dbpediaTypeURI != null){
+	            				KGNode nodeClassType = getKGNode(dbpediaTypeURI, KGNode.RELATIONSHIP_TYPE_OF, directHitsOnInstance);
+	            				int classTypeId = dao.insertType(nodeInstanceId, nodeClassType);
+	            				//System.out.println("INSERT (Type, Instance): (" + nodeClassType.getUri() +"," + nodeInstance.getUri() + ")" );
+	            				
+	            				ArrayList<KGNode> subclasses = getSubclassesOf(nodeClassType);
+	            				subclasses.forEach(subclass ->{
+	            					//System.out.println("Subclass: " + subclass.getUri());
+	            					KGNode nodeClassSubclassOf = getKGNode(subclass.getUri(), KGNode.RELATIONSHIP_SUBCLASS_OF, directHitsOnInstance);
+	            					dao.insertSubclass(classTypeId, nodeClassSubclassOf);
+	            				});
+	            			}
+	            		});
+	            	}
                 });
             } catch (UnexpectedStatusCodeException e) {
                 LOG.error(String.format(Locale.US,
@@ -136,32 +135,36 @@ public class NerdExecutor {
 
     	Query query = QueryFactory.create(querySPARQL);
     	QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
-    	String msg = "Subclasses of " + nodeClassType.getLabel() + "\n";
+    	String msg = "------ Subclasses of " + nodeClassType.toString() + "\n";
     	try {
     		ResultSet results = qexec.execSelect();
-
+    		
+    		ArrayList<String> uris = new ArrayList<>();
     		while(results.hasNext()) {
     			boolean addSubclass = false;
     			String adjacentURI = results.next().toString();
-   
-    			if(!adjacentURI.contains(URL_ROOT)){
-    				if(adjacentURI.contains("dbpedia")){
-    					String[] res = adjacentURI.split("subclass = <");
-    					res = res[1].split(">");
-    					adjacentURI = res[0];
+    			
+    			if(!uris.contains(adjacentURI)){
+    				uris.add(adjacentURI);
+    				
+    				if(!adjacentURI.contains(KGNode.URL_ROOT)){
+    					if(adjacentURI.contains("dbpedia")){
+    						String[] res = adjacentURI.split("subclass = <");
+    						res = res[1].split(">");
+    						adjacentURI = res[0];
+    						addSubclass = true;
+    					}
+    				}else{
+    					adjacentURI = KGNode.URL_ROOT;
     					addSubclass = true;
     				}
-    			}else{
-    				adjacentURI = URL_ROOT;
-    				addSubclass = true;
+    				//Pode ser que a classe já exista
+    				KGNode subclass = getKGNode(adjacentURI, KGNode.RELATIONSHIP_SUBCLASS_OF, nodeClassType.getIndirectHitsType());
+    				if(subclass != null &&!containsLabel(subclasses, subclass.getLabel()) && addSubclass){
+    					subclasses.add(subclass);
+    					msg += "- " + subclass.getLabel() + "\n"; 
+    				}
     			}
-
-    			KGNode subclass = new KGNode(adjacentURI);
-    			if(!containsLabel(subclasses, subclass.getLabel()) && addSubclass){
-    				subclasses.add(subclass);
-    				msg += "- " + subclass.getLabel() + "\n"; 
-    			}
-    			
     		}
     	}finally {
     		qexec.close();
@@ -170,18 +173,6 @@ public class NerdExecutor {
     	System.out.println(msg);
     	return subclasses;
     }
-
-	private String getDBpediaClassURI(String label) {
-		String uri = null;
-		String[] parts = label.split("DBpedia:");
-		
-		if(parts != null && parts.length == 2){
-			uri = "http://dbpedia.org/ontology/" + parts[1];
-		}else if (label.contains("Thing")){
-			uri = URL_ROOT;
-		}
-		return uri;
-	}
 
 	private String getQueryPrefix() {
     	HashMap<String, String> prefixes = new HashMap<>();
@@ -202,23 +193,21 @@ public class NerdExecutor {
     	KGNodeDAO dao = new KGNodeDAO();
     	
     	LOG.info("******************NerdExecutor CSV generation*****************");
-    	String nodeText;
 
+    	ArrayList<KGNode> resources = new ArrayList<>();
     	for(Integer id: instanceIds){
     		KGNode n = dao.getById(id);
-    		nodeText = String.format(Locale.US, "%s;%d;%d;%d", n.getLabel(), n.getDirectHits(), n.getIndirectHitsType(), n.getIndirectHitsSubclassOf());
-    		nerdReport.append(nodeText);
-    		
+    		System.out.println("* Instance");
+    		appendNodeOnReport(n, resources, nerdReport);
     		ArrayList<KGNode> types = dao.getTypesByInstanceId(n.getId());
     		for(KGNode type: types){
-    			nodeText = String.format(Locale.US, "%s;%d;%d;%d", type.getLabel(), type.getDirectHits(), type.getIndirectHitsType(), type.getIndirectHitsSubclassOf());
-        		nerdReport.append(nodeText);
-        		
-    			ArrayList<KGNode> subclasses = dao.getSuperclassesPath(n.getId(), null);
-    			for(KGNode subclass: subclasses){
-    				nodeText = String.format(Locale.US, "%s;%d;%d;%d", subclass.getLabel(), subclass.getDirectHits(), subclass.getIndirectHitsType(), subclass.getIndirectHitsSubclassOf());
-    	    		nerdReport.append(nodeText);
-    			}
+    			System.out.println("** Type");
+    			appendNodeOnReport(type, resources, nerdReport);
+        		ArrayList<KGNode> subclasses = dao.getSuperclassesPath(type.getId(), null);
+        		for(KGNode subclass: subclasses){
+        			System.out.println("*** Subclass");
+        			appendNodeOnReport(subclass, resources, nerdReport);
+        		}
     		}
     	}
     	String postfixFilename = String.format(
@@ -234,28 +223,41 @@ public class NerdExecutor {
     	LOG.info("***************************NerdExecutor CSV end**************************");
     }
 
-	private KGNode getKGNode(String uri, String relationship, int hits) {
-		
+	private void appendNodeOnReport(KGNode n, ArrayList<KGNode> resources, CSVReport nerdReport) {
+		if(!containsLabel(resources, n.getLabel())){
+			resources.add(n);
+			String nodeText = String.format(Locale.US, "%s;%d;%d;%d", n.getLabel(), n.getDirectHits(), n.getIndirectHitsType(), n.getIndirectHitsSubclassOf());
+			nerdReport.append(nodeText);
+			System.out.println(nodeText);
+		}
+	}
+
+	private KGNode getKGNode(String uri, String relationship, int hitsToSum) {
 		KGNodeDAO dao = new KGNodeDAO();
-		KGNode resource = dao.getByURI(uri);
+		KGNode resource = null;
 		
-		if(resource == null){
-			resource = new KGNode(uri);
+		if(uri.contains("dbpedia") || uri.contains(KGNode.URL_ROOT)){
+			resource = dao.getByURI(uri);
+			
+			if(resource == null){
+				resource = new KGNode(uri);
+			}
+			
+			switch (relationship) {
+			case KGNode.RELATIONSHIP_INSTANCE:
+				resource.setDirectHits(resource.getDirectHits() + hitsToSum);
+				break;
+			case KGNode.RELATIONSHIP_TYPE_OF:
+				resource.setIndirectHitsType(resource.getIndirectHitsType() + hitsToSum);
+				break;
+			case KGNode.RELATIONSHIP_SUBCLASS_OF:
+				resource.setIndirectHitsSubclassOf(resource.getIndirectHitsSubclassOf() + hitsToSum);
+				break;	
+			}
+			
+			dao.insert(resource);
+			System.out.println("obtain/update node: " + resource.toString() + "---" + relationship);
 		}
-		
-		switch (relationship) {
-		case RELATIONSHIP_INSTANCE:
-			resource.setDirectHits(resource.getDirectHits() + hits);
-			break;
-		case RELATIONSHIP_TYPE_OF:
-			resource.setIndirectHitsType(resource.getIndirectHitsType() + hits);
-			break;
-		case RELATIONSHIP_SUBCLASS_OF:
-			resource.setIndirectHitsSubclassOf(resource.getIndirectHitsSubclassOf() + hits);
-			break;	
-		}
-		
-		System.out.println("addResource: " + resource.toString() + "---" + relationship);
 		return resource;
 	}
 

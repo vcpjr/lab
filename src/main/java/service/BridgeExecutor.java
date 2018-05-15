@@ -10,8 +10,8 @@ import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dao.KGNodeDAO;
 import pojo.KGNode;
-import util.BridgesFileReader;
 import util.CSVReport;
 
 public class BridgeExecutor {
@@ -32,21 +32,22 @@ public class BridgeExecutor {
 	private static final String APP_ROOT = System.getProperty("user.dir");
 	private static final Logger LOG = LoggerFactory.getLogger(BridgeExecutor.class);
 	private static final File outputPath = new File(APP_ROOT,"output");
+	private final KGNodeDAO dao = new KGNodeDAO();
 
 	// K: Recurso ou classe da DBpedia
 	// V: classe da ontologia de alto nível
-	private final HashMap<KGNode, String> keyBridges;
-	private final HashMap<KGNode, String> newBridges;
-	private final HashMap<KGNode, String> inconsistentBridges;
+	private HashMap<KGNode, String> keyBridges;
+	private HashMap<KGNode, String> newBridges;
+	private HashMap<KGNode, String> inconsistentBridges;
 	
-    private final HashMap<KGNode, List<KGNode>> mapSubclassesOfResource;
 	private KGNode root;
 
 	public BridgeExecutor(File datasetFile){
-		keyBridges = BridgesFileReader.readKeyBridgesFromFile(datasetFile);
-		newBridges = new HashMap<>();
-		inconsistentBridges = new HashMap<>();
-		this.mapSubclassesOfResource = null; //TODO pegar do banco/arquivo
+		//TODO teste com DAO
+		//keyBridges = BridgesFileReader.readKeyBridgesFromFile(datasetFile);
+		KGNodeDAO dao = new KGNodeDAO();
+		
+		keyBridges = dao.getBridges(KGNode.BRIDGE_TYPE_KEY);
 	}
 
 	public void execute(){
@@ -55,11 +56,13 @@ public class BridgeExecutor {
 		// Validar
 
 		//this.checkCompleteNonRecursive(root, null);
-
 		for(KGNode node: keyBridges.keySet()){
 			this.root = node;
 			this.checkComplete(this.root, keyBridges.get(node));
 		}
+		
+		newBridges = dao.getBridges(KGNode.BRIDGE_TYPE_NEW);
+		inconsistentBridges = dao.getBridges(KGNode.BRIDGE_TYPE_INCONSISTENT);
 
 		LOG.info("********************************************************************");
 		LOG.info("******************BridgeExecutor execution complete*****************");
@@ -67,43 +70,21 @@ public class BridgeExecutor {
 		LOG.info("************ New Bridges: " + this.newBridges.size());
 		LOG.info("************ Inconsistent Bridges: " + this.inconsistentBridges.size());
 
-
 		generateReportCSV();
 	}
 	
 	private void generateReportCSV() {
-		CSVReport bridgeReport = new CSVReport("Resource; #Direct Hits; #Indirect Hits (Type); #Indirect Hits (Subclass); GoodRelations (gr:) class; Type");
+		CSVReport bridgeReport = new CSVReport("Resource; #Direct Hits; #Indirect Hits (Type); #Indirect Hits (Subclass); Accumulated; GoodRelations (gr:) class; Type");
 
 		LOG.info("******************BridgeExecutor keyBridges CSV generation*****************");
 		String nodeText;
-		
-		HashMap<KGNode, String> allBridges = new HashMap<>();
-		
-		//TODO testar e incluir inconsistent
-		for(KGNode n: keyBridges.keySet()){
-			LOG.info("add key bridge: " + n.toString());
-			n.setBridgeType("Key Bridge");
-			allBridges.put(n, keyBridges.get(n));
-		}
-		
-		for(KGNode n: newBridges.keySet()){
-			//LOG.info("add new bridge: " + n.toString());
-			n.setBridgeType("New Bridge");
-			allBridges.put(n, keyBridges.get(n));
-		}
-		
+		HashMap<KGNode, String> allBridges = dao.getBridges(null);
 		LOG.info("******************BridgeExecutor newBridges CSV generation*****************");
 
 		for(KGNode n: allBridges.keySet()){
-			nodeText = String.format(Locale.US, "%s;%d;%d;%d;%s;%s", n.getLabel(), n.getDirectHits(), n.getIndirectHitsType(), n.getIndirectHitsSubclassOf(), newBridges.get(n), n.getBridgeType());
+			int accumulatedHits = n.getDirectHits() + n.getIndirectHitsSubclassOf() + n.getIndirectHitsType();
+			nodeText = String.format(Locale.US, "%s;%d;%d;%d;%d;%s;%s", n.getLabel(), n.getDirectHits(), n.getIndirectHitsType(), n.getIndirectHitsSubclassOf(), accumulatedHits, allBridges.get(n), n.getBridgeType());
 			bridgeReport.append(nodeText);
-			/*
-			Set<KGNode> nodesRelatedToN = n.getRelationships().keySet();
-			
-			for(KGNode relatedNode: nodesRelatedToN){
-				nodeText = String.format(Locale.US, "%s;%s;%s;%d", n.getLabel(), n.getUri(), n.getRelationships().get(relatedNode), n.getRelationships().size());
-				bridgeReport.append(nodeText);
-			}*/
 		}
 		String postfixFilename = String.format(Locale.US,"%s.csv",LocalDate.now().toString());
 		bridgeReport.generate(new File(outputPath, "bridgesCheckedCompleted-" + postfixFilename));
@@ -122,14 +103,17 @@ public class BridgeExecutor {
 	 */
 	private void checkComplete(KGNode node, String domainClass){
 
-		ArrayList<KGNode> children = (ArrayList<KGNode>) mapSubclassesOfResource.get(node);
+		KGNodeDAO dao = new KGNodeDAO();
+		//TODO fazer com type também??
+		ArrayList<KGNode> superclassesFromNode = dao.getSuperclassesPath(node.getId(), null);
 		List<KGNode> nodesFromKeyBridges = new ArrayList<KGNode>(keyBridges.keySet());
 		
-		if(children.isEmpty()) {
-			newBridges.put(node, domainClass);
+		if(superclassesFromNode.isEmpty()) {
+			//newBridges.put(node, domainClass);
+			dao.insertBridge(node.getUri(), domainClass, KGNode.BRIDGE_TYPE_NEW);
 		}else {
-			for(int i = 0; i< children.size(); i++){
-				KGNode childNode = children.get(i);
+			for(int i = 0; i< superclassesFromNode.size(); i++){
+				KGNode childNode = superclassesFromNode.get(i);
 				String childDomainClass = keyBridges.get(childNode);
 				if(childDomainClass == null){
 					checkComplete(childNode, domainClass);
@@ -138,12 +122,15 @@ public class BridgeExecutor {
 						LOG.info("** Domain class: "+ domainClass + "exists on keyBridges");
 						if(keyBridges.get(childNode) != null 
 								&& keyBridges.get(childNode).equals(domainClass)){
-							newBridges.put(childNode, domainClass);
+							//newBridges.put(childNode, domainClass);
+							dao.insertBridge(childNode.getUri(), domainClass, KGNode.BRIDGE_TYPE_NEW);
 						}else{
-							inconsistentBridges.put(childNode, domainClass);
+							//inconsistentBridges.put(childNode, domainClass);
+							dao.insertBridge(childNode.getUri(), domainClass, KGNode.BRIDGE_TYPE_INCONSISTENT);
 						}
 					}else {
-						newBridges.put(childNode, domainClass);
+						//newBridges.put(childNode, domainClass);
+						dao.insertBridge(childNode.getUri(), domainClass, KGNode.BRIDGE_TYPE_NEW);
 					}
 				}
 			}

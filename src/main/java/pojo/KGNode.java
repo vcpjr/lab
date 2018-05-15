@@ -8,6 +8,17 @@ package pojo;
  */
 public class KGNode {
 
+	public static final String RELATIONSHIP_INSTANCE = "instance";
+	public static final String RELATIONSHIP_TYPE_OF = "type_of";
+	public static final String RELATIONSHIP_SUBCLASS_OF = "subclass_of";
+	public static final String URL_ROOT = "owl:Thing";
+	
+	public static final String BRIDGE_TYPE_KEY = "Key";
+	public static final String BRIDGE_TYPE_NEW = "New";
+	public static final String BRIDGE_TYPE_INCONSISTENT = "Inconsistent";
+	
+	
+	
 	private Integer id;
 	private String label;
 	private String uri;
@@ -108,5 +119,17 @@ public class KGNode {
 
 	public void setId(Integer id) {
 		this.id = id;
+	}
+	
+	public static String getDBpediaClassURI(String label) {
+		String uri = null;
+		String[] parts = label.split("DBpedia:");
+		
+		if(parts != null && parts.length == 2){
+			uri = "http://dbpedia.org/ontology/" + parts[1];
+		}else if (label.contains("Thing")){
+			uri = URL_ROOT;
+		}
+		return uri;
 	}
 }
