@@ -12,31 +12,34 @@ public class KGNode {
 	public static final String RELATIONSHIP_TYPE_OF = "type_of";
 	public static final String RELATIONSHIP_SUBCLASS_OF = "subclass_of";
 	public static final String URL_ROOT = "owl:Thing";
-	
+
+	public static final String NODE_TYPE_INSTANCE = "Instance";
+	public static final String NODE_TYPE_CLASS = "Class";
+
 	public static final String BRIDGE_TYPE_KEY = "Key";
 	public static final String BRIDGE_TYPE_NEW = "New";
 	public static final String BRIDGE_TYPE_INCONSISTENT = "Inconsistent";
-	
-	
-	
+
 	private Integer id;
 	private String label;
 	private String uri;
 	private int directHits;
 	private int indirectHitsType;
 	private int indirectHitsSubclassOf;
+	private String nodeType; //Class or instance
 	private String bridgeType;
 
 	public KGNode() {
 
 	}
-	
-	public KGNode(String uri) {
+
+	public KGNode(String uri, String type) {
 		super();
 		//TODO teste
 		//this.label = String.format("%s", label).toLowerCase();
 		this.label = uri;
 		this.uri = uri;
+		this.nodeType = type;
 	}
 
 
@@ -120,16 +123,24 @@ public class KGNode {
 	public void setId(Integer id) {
 		this.id = id;
 	}
-	
+
 	public static String getDBpediaClassURI(String label) {
 		String uri = null;
 		String[] parts = label.split("DBpedia:");
-		
+
 		if(parts != null && parts.length == 2){
 			uri = "http://dbpedia.org/ontology/" + parts[1];
 		}else if (label.contains("Thing")){
 			uri = URL_ROOT;
 		}
 		return uri;
+	}
+
+	public String getNodeType() {
+		return nodeType;
+	}
+
+	public void setNodeType(String nodeType) {
+		this.nodeType = nodeType;
 	}
 }

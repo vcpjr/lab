@@ -18,44 +18,37 @@ public class BridgeExecutor {
 	
 	/*
 	 * TODO 08/05/2018
-	 * - Rever step 1 (contagem)
+	 * - Rever step 1 (contagem): OK
+	 * - Ordenar a planilha por hierarquias ou hits acumulados: OK
+	 * - Dúvidas nas pontes: usar brand: OK
+	 * 
 	 * - Definições de hits (Dawak)
 	 * 		- Diretos
 	 * 		- Indiretos por type
 	 * 		- Indiretos por subclass_of 	 
-	 * - Ordenar a planilha por hierarquias ou hits acumulados
-	 * - Dúvidas nas pontes: usar brand
 	 * - Filtragem por hits acumulados
 	 * - Diminuir pseudocódigo
 	 */
-
 	private static final String APP_ROOT = System.getProperty("user.dir");
-	private static final Logger LOG = LoggerFactory.getLogger(BridgeExecutor.class);
-	private static final File outputPath = new File(APP_ROOT,"output");
-	private final KGNodeDAO dao = new KGNodeDAO();
+    private static final Logger LOG = LoggerFactory.getLogger(NerdExecutor.class);
+    private static final File outputPath = new File(APP_ROOT,"output");
+	private KGNodeDAO dao = new KGNodeDAO();
 
-	// K: Recurso ou classe da DBpedia
-	// V: classe da ontologia de alto nível
+	// K: Instância ou classe da DBpedia
+	// V: Nome da classe da ontologia de alto nível
 	private HashMap<KGNode, String> keyBridges;
 	private HashMap<KGNode, String> newBridges;
 	private HashMap<KGNode, String> inconsistentBridges;
 	
 	private KGNode root;
 
-	public BridgeExecutor(File datasetFile){
-		//TODO teste com DAO
-		//keyBridges = BridgesFileReader.readKeyBridgesFromFile(datasetFile);
-		KGNodeDAO dao = new KGNodeDAO();
-		
+	public BridgeExecutor(){
+		dao = new KGNodeDAO();
 		keyBridges = dao.getBridges(KGNode.BRIDGE_TYPE_KEY);
 	}
 
 	public void execute(){
-		//recursive procedure, executes until the final of the nodeFromKG children hierarchy
 		//TODO teste com a raiz variável, de acordo com os termos encontrados em cada tweet
-		// Validar
-
-		//this.checkCompleteNonRecursive(root, null);
 		for(KGNode node: keyBridges.keySet()){
 			this.root = node;
 			this.checkComplete(this.root, keyBridges.get(node));
@@ -104,12 +97,12 @@ public class BridgeExecutor {
 	private void checkComplete(KGNode node, String domainClass){
 
 		KGNodeDAO dao = new KGNodeDAO();
-		//TODO fazer com type também??
-		ArrayList<KGNode> superclassesFromNode = dao.getSuperclassesPath(node.getId(), null);
+		
+		//TODO ajustar!!!
+		ArrayList<KGNode> superclassesFromNode = dao.getSuperclassesPath(node.getId(), dao.getConnection());
 		List<KGNode> nodesFromKeyBridges = new ArrayList<KGNode>(keyBridges.keySet());
 		
 		if(superclassesFromNode.isEmpty()) {
-			//newBridges.put(node, domainClass);
 			dao.insertBridge(node.getUri(), domainClass, KGNode.BRIDGE_TYPE_NEW);
 		}else {
 			for(int i = 0; i< superclassesFromNode.size(); i++){
@@ -122,19 +115,17 @@ public class BridgeExecutor {
 						LOG.info("** Domain class: "+ domainClass + "exists on keyBridges");
 						if(keyBridges.get(childNode) != null 
 								&& keyBridges.get(childNode).equals(domainClass)){
-							//newBridges.put(childNode, domainClass);
 							dao.insertBridge(childNode.getUri(), domainClass, KGNode.BRIDGE_TYPE_NEW);
 						}else{
-							//inconsistentBridges.put(childNode, domainClass);
 							dao.insertBridge(childNode.getUri(), domainClass, KGNode.BRIDGE_TYPE_INCONSISTENT);
 						}
 					}else {
-						//newBridges.put(childNode, domainClass);
 						dao.insertBridge(childNode.getUri(), domainClass, KGNode.BRIDGE_TYPE_NEW);
 					}
 				}
 			}
 		}
+		dao.closeConnection();
 	}
 
 	public boolean containsLabel(final List<KGNode> list, final String label){

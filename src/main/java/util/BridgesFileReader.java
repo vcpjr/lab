@@ -127,7 +127,7 @@ public class BridgesFileReader {
 			uri += parts[1];
 
 			//node = new KGNode(uri, parts[1]);
-			node = new KGNode(uri);
+			node = new KGNode(uri, KGNode.NODE_TYPE_CLASS);
 		}
 
 		return node;

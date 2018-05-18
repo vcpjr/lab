@@ -5,19 +5,11 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
- * Classe respons�vel por criar e destruir conexões com bancos de dados
- * 
- * O banco escolhido foi o MySQL, assim � necess�rio utilizar o respectivo
- * driver JDBC
- * 
  * @author Vilmar C. Pereira Júnior
- * 
- *         Disciplina de Desenvolvimento Web Senac 2017.1
- *
  */
 public class ConnectionFactory {
 
-	public Connection obterConexao() {
+	public Connection createConnection() {
 		String nomeEsquema = "mestrado";
 		String enderecoBanco = "jdbc:mysql://localhost/" + nomeEsquema + "?autoReconnect=true&useSSL=false";
 		String usuario = "root";
@@ -33,7 +25,7 @@ public class ConnectionFactory {
 		}
 	}
 
-	public static void fecharConexao(Connection con) {
+	public static void closeConnection(Connection con) {
 		try {
 			con.close();
 		} catch (SQLException e) {
