@@ -15,7 +15,7 @@ import pojo.KGNode;
 import util.CSVReport;
 
 public class BridgeExecutor {
-	
+
 	/*
 	 * TODO 08/05/2018
 	 * - Rever step 1 (contagem): OK
@@ -30,8 +30,8 @@ public class BridgeExecutor {
 	 * - Diminuir pseudocódigo
 	 */
 	private static final String APP_ROOT = System.getProperty("user.dir");
-    private static final Logger LOG = LoggerFactory.getLogger(NerdExecutor.class);
-    private static final File outputPath = new File(APP_ROOT,"output");
+	private static final Logger LOG = LoggerFactory.getLogger(NerdExecutor.class);
+	private static final File outputPath = new File(APP_ROOT,"output");
 	private KGNodeDAO dao = new KGNodeDAO();
 
 	// K: Instância ou classe da DBpedia
@@ -39,7 +39,7 @@ public class BridgeExecutor {
 	private HashMap<KGNode, String> keyBridges;
 	private HashMap<KGNode, String> newBridges;
 	private HashMap<KGNode, String> inconsistentBridges;
-	
+
 	private KGNode root;
 
 	public BridgeExecutor(){
@@ -53,7 +53,7 @@ public class BridgeExecutor {
 			this.root = node;
 			this.checkComplete(this.root, keyBridges.get(node));
 		}
-		
+
 		newBridges = dao.getBridges(KGNode.BRIDGE_TYPE_NEW);
 		inconsistentBridges = dao.getBridges(KGNode.BRIDGE_TYPE_INCONSISTENT);
 
@@ -65,7 +65,7 @@ public class BridgeExecutor {
 
 		generateReportCSV();
 	}
-	
+
 	private void generateReportCSV() {
 		CSVReport bridgeReport = new CSVReport("Resource; #Direct Hits; #Indirect Hits (Type); #Indirect Hits (Subclass); Accumulated; GoodRelations (gr:) class; Type");
 
@@ -84,7 +84,7 @@ public class BridgeExecutor {
 
 		LOG.info("***************************BridgeExecutor CSV end**************************");
 
-		
+
 	}
 
 	/**
@@ -97,30 +97,32 @@ public class BridgeExecutor {
 	private void checkComplete(KGNode node, String domainClass){
 
 		KGNodeDAO dao = new KGNodeDAO();
-		
-		//TODO ajustar!!!
+
+		//TODO testar (18/05/18)
 		ArrayList<KGNode> superclassesFromNode = dao.getSuperclassesPath(node.getId(), dao.getConnection());
 		List<KGNode> nodesFromKeyBridges = new ArrayList<KGNode>(keyBridges.keySet());
-		
+
 		if(superclassesFromNode.isEmpty()) {
 			dao.insertBridge(node.getUri(), domainClass, KGNode.BRIDGE_TYPE_NEW);
 		}else {
 			for(int i = 0; i< superclassesFromNode.size(); i++){
 				KGNode childNode = superclassesFromNode.get(i);
-				String childDomainClass = keyBridges.get(childNode);
-				if(childDomainClass == null){
-					checkComplete(childNode, domainClass);
-				}else{
-					if(containsLabel(nodesFromKeyBridges, childNode.getLabel())){
-						LOG.info("** Domain class: "+ domainClass + "exists on keyBridges");
-						if(keyBridges.get(childNode) != null 
-								&& keyBridges.get(childNode).equals(domainClass)){
+				if(childNode != null && !childNode.getLabel().contains(KGNode.URL_ROOT)){
+					String childDomainClass = keyBridges.get(childNode);
+					if(childDomainClass == null){
+						checkComplete(childNode, domainClass);
+					}else{
+						if(containsLabel(nodesFromKeyBridges, childNode.getLabel())){
+							LOG.info("** Domain class: "+ domainClass + "exists on keyBridges");
+							if(keyBridges.get(childNode) != null 
+									&& keyBridges.get(childNode).equals(domainClass)){
+								dao.insertBridge(childNode.getUri(), domainClass, KGNode.BRIDGE_TYPE_NEW);
+							}else{
+								dao.insertBridge(childNode.getUri(), domainClass, KGNode.BRIDGE_TYPE_INCONSISTENT);
+							}
+						}else {
 							dao.insertBridge(childNode.getUri(), domainClass, KGNode.BRIDGE_TYPE_NEW);
-						}else{
-							dao.insertBridge(childNode.getUri(), domainClass, KGNode.BRIDGE_TYPE_INCONSISTENT);
 						}
-					}else {
-						dao.insertBridge(childNode.getUri(), domainClass, KGNode.BRIDGE_TYPE_NEW);
 					}
 				}
 			}
