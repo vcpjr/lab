@@ -386,12 +386,24 @@ public class KGNodeDAO {
 				}
 			}
 			stmt.close();
+			
+			printPath(idClassWithTypeRelationship, path, conn);
+			
 			return path;
 		} catch (SQLException e) {
 			return null;
 		}
 	}
 
+
+	private void printPath(Integer originNodeId, ArrayList<KGNode> path, Connection conn) {
+		KGNode origin = this.getById(originNodeId, conn);
+		String msg = "";
+		for(KGNode node: path){
+			msg += " -> " + node.toString();
+		}
+		System.out.println("Path from " + origin.toString() + ": " + msg);
+	}
 
 	private void insertPathToThing(Integer classWithTypeRelationshipId, ArrayList<KGNode> classes, Connection conn) {
 		ArrayList<KGNode> oldPath = this.getSuperclassesPath(classWithTypeRelationshipId, conn);
