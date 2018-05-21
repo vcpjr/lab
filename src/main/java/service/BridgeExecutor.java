@@ -99,6 +99,7 @@ public class BridgeExecutor {
 		KGNodeDAO dao = new KGNodeDAO();
 
 		//TODO testar (18/05/18)
+		//TODO DESCER e não subir na hierarquia
 		ArrayList<KGNode> superclassesFromNode = dao.getSuperclassesPath(node.getId(), dao.getConnection());
 		List<KGNode> nodesFromKeyBridges = new ArrayList<KGNode>(keyBridges.keySet());
 

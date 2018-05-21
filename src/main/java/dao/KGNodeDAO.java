@@ -26,13 +26,18 @@ public class KGNodeDAO {
 	public String createRDFLink(KGNode source, KGNode destiny, String relationshipURI){
 		String ret = "";
 		ret = "<" + source.getUri() + "> <" + relationshipURI   + "> <" + destiny.getUri() + ">.";
+		
+		System.out.println("** Creating RDF link: " + ret);
 		return ret;
 	}
 	
 	public String createLabel(KGNode source){
 		//<http://dbpedia.org/ontology/MusicalArtist>	<http://www.w3.org/2000/01/rdf-schema#label>	"musicien"@fr .
+		
 		String ret = "";
 		ret = "<" + source.getUri() + "> <" + KGNode.LABEL_URI   + "> " + '"' + source.toString() + '"' + " .";
+		
+		System.out.println("** Creating RDF label: " + ret);
 		return ret;
 	}
 
