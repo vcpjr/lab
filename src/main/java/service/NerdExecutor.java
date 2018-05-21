@@ -133,7 +133,7 @@ public class NerdExecutor {
     		KGNode n = dao.getById(id, null);
     		System.out.println("* Instance");
     		appendNodeOnReport(n, resources, nerdReport);
-    		ArrayList<KGNode> types = dao.getTypesByInstanceId(n.getId());
+    		ArrayList<KGNode> types = dao.getTypesByInstanceId(n.getId(), dao.getConnection());
     		for(KGNode type: types){
     			System.out.println("** Type");
     			appendNodeOnReport(type, resources, nerdReport);

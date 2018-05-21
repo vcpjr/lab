@@ -22,6 +22,19 @@ public class KGNodeDAO {
 
 	public KGNodeDAO() {
 	}
+	
+	public String createRDFLink(KGNode source, KGNode destiny, String relationshipURI){
+		String ret = "";
+		ret = "<" + source.getUri() + "> <" + relationshipURI   + "> <" + destiny.getUri() + ">.";
+		return ret;
+	}
+	
+	public String createLabel(KGNode source){
+		//<http://dbpedia.org/ontology/MusicalArtist>	<http://www.w3.org/2000/01/rdf-schema#label>	"musicien"@fr .
+		String ret = "";
+		ret = "<" + source.getUri() + "> <" + KGNode.LABEL_URI   + "> " + '"' + source.toString() + '"' + " .";
+		return ret;
+	}
 
 	public int insertSubclass(int nodeClassId, KGNode nodeSuperclass) {
 		String sql = "INSERT INTO KGNODE_SUBCLASS (IDNODE, IDSUBCLASS) VALUES (?, ?)";
@@ -440,7 +453,7 @@ public class KGNodeDAO {
 		}
 	}
 
-	public ArrayList<KGNode> getTypesByInstanceId(Integer instanceNodeId) {
+	public ArrayList<KGNode> getTypesByInstanceId(Integer instanceNodeId, Connection conn) {
 		this.getConnection();
 
 		ArrayList<KGNode> types = new ArrayList<>();
@@ -453,7 +466,7 @@ public class KGNodeDAO {
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				idNodeType = rs.getInt(1);
-				KGNode typeNode = this.getById(idNodeType, null);
+				KGNode typeNode = this.getById(idNodeType, conn);
 				types.add(typeNode);
 			}
 
@@ -553,7 +566,7 @@ public class KGNodeDAO {
 		return subclasses;
 	}
 
-	public static boolean containsLabel(final List<KGNode> list, final String label){
+	public static boolean containsLabel(List<KGNode> list, String label){
 		return list.stream().filter(o -> o.getLabel().equals(label)).findFirst().isPresent();
 	}
 
@@ -674,5 +687,27 @@ public class KGNodeDAO {
 
 		}
 		this.closeConnection();
+	}
+
+	public ArrayList<KGNode> getByNodeType(String nodeType) {
+		this.getConnection();
+		ArrayList<KGNode> nodes = new ArrayList<KGNode>();
+		String sql = "SELECT * FROM KGNode N WHERE N.TYPE = '" + nodeType + "'";
+		try {
+			PreparedStatement stmt = connection.prepareStatement(sql);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				KGNode node = this.getKGNodeResultSet(rs);
+				nodes.add(node);
+			}
+			stmt.close();
+
+			return nodes;
+		} catch (SQLException e) {
+
+		} finally {
+			ConnectionFactory.closeConnection(this.connection);
+		}
+		return nodes;
 	}
 }

@@ -11,6 +11,11 @@ public class KGNode {
 	public static final String RELATIONSHIP_INSTANCE = "instance";
 	public static final String RELATIONSHIP_TYPE_OF = "type_of";
 	public static final String RELATIONSHIP_SUBCLASS_OF = "subclass_of";
+	
+	public static final String RELATIONSHIP_TYPE_OF_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+	public static final String RELATIONSHIP_SUBCLASS_OF_URI = "http://www.w3.org/2000/01/rdf-schema#subClassOf";
+	public static final String LABEL_URI = "http://www.w3.org/2000/01/rdf-schema#label";
+	
 	public static final String URL_ROOT = "owl:Thing";
 
 	public static final String NODE_TYPE_INSTANCE = "Instance";
@@ -105,7 +110,13 @@ public class KGNode {
 
 	@Override
 	public String toString() {
-		return this.uri + " (" + this.directHits + "," + this.indirectHitsType + "," + this.indirectHitsSubclassOf + ")";  
+		String[] parts = this.label.split("http://dbpedia.org/ontology/");
+		
+		if(parts != null && parts.length == 2){
+			this.setLabel(parts[1]);
+		}
+		
+		return this.label + " (" + this.directHits + "," + this.indirectHitsType + "," + this.indirectHitsSubclassOf + ")";  
 	}
 
 	public String getBridgeType() {

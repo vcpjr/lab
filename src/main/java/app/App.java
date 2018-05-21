@@ -1,5 +1,10 @@
 package app;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -7,10 +12,11 @@ import org.slf4j.LoggerFactory;
 
 import dao.KGNodeDAO;
 import pojo.KGNode;
-import service.BridgeExecutor;
 
 public class App {
 	private static final Logger LOG = LoggerFactory.getLogger(App.class);
+	private static final String APP_ROOT = System.getProperty("user.dir");
+	private static final File outputPath = new File(APP_ROOT,"output");
 
 	public static void main(String[] args) {
 		/*
@@ -39,6 +45,8 @@ public class App {
 		NerdExecutor nerdExecutor = new NerdExecutor(inputFile);
 		nerdExecutor.execute(confidence, language);
 		*/
+		
+		/*
 		KGNodeDAO dao = new KGNodeDAO();
 
 		//TODO executar o STEP 2 daqui em diante
@@ -48,6 +56,10 @@ public class App {
 		
 		BridgeExecutor bridgeService = new BridgeExecutor();
 		bridgeService.execute();
+	 
+		 */
+		
+		testGenerateRDF();
 
 		//TODO desenhar os caminhos -> Ver APIs para isso
 		//http://graphstream-project.org/
@@ -60,6 +72,59 @@ public class App {
 		//semanticDataCubeExecutor.execute(); //build the DW
 		 * 
 		 */
+	}
+
+	private static void testGenerateRDF() {
+		KGNodeDAO dao = new KGNodeDAO();
+
+		ArrayList<KGNode> instances = dao.getByNodeType(KGNode.NODE_TYPE_INSTANCE);
+		String rdf = "";
+		
+		ArrayList<Integer> visitedTypeIds = new ArrayList<>();
+		ArrayList<KGNode> labels = new ArrayList<>();
+		
+		Connection conn = dao.getConnection();
+		for(KGNode instance: instances){
+			ArrayList<KGNode> types = dao.getTypesByInstanceId(instance.getId(), conn);
+			
+			for(KGNode type: types){
+				//rdf += dao.createRDFLink(instance, type, KGNode.RELATIONSHIP_TYPE_OF_URI) + "\n";
+				if(!visitedTypeIds.contains(type.getId())){
+					System.out.println("Visiting Type: " + type.toString());
+					
+					visitedTypeIds.add(type.getId());
+					rdf += dao.createLabel(type) + "\n";
+					labels.add(type);
+					ArrayList<KGNode> path = dao.getSuperclassesPath(type.getId(), dao.getConnection());
+					KGNode previous = type;
+					
+					if(path!= null){
+						for(KGNode nextNodeOnPath: path){
+							if(!labels.contains(nextNodeOnPath)){
+								rdf += dao.createLabel(nextNodeOnPath) + "\n";
+								labels.add(nextNodeOnPath);
+							}
+							rdf += dao.createRDFLink(previous, nextNodeOnPath, KGNode.RELATIONSHIP_SUBCLASS_OF_URI) + "\n";
+							previous = nextNodeOnPath;
+						}
+					}
+				}
+			}
+		}
+		
+		generateRDFFile(rdf);
+	}
+
+	private static void generateRDFFile(String rdf) {
+		File file = new File(outputPath, "nerdExecutionRDF.rdf"); 
+		FileWriter writer;
+		try {
+			writer = new FileWriter(file);
+			writer.write(rdf);
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private static void createKeyBridges() {
