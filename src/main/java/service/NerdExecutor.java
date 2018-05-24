@@ -96,7 +96,7 @@ public class NerdExecutor {
 	            				int classTypeId = dao.insertType(nodeInstanceId, nodeClassType);
 	            				//System.out.println("INSERT (Type, Instance): (" + nodeClassType.getUri() +"," + nodeInstance.getUri() + ")" );
 	            				
-	            				ArrayList<KGNode> subclasses = dao.getSubclassesOf(nodeClassType);
+	            				ArrayList<KGNode> subclasses = dao.getSuperclassesOf_SpotlightQuery(nodeClassType);
 	            				subclasses.forEach(subclass ->{
 	            					//System.out.println("Subclass: " + subclass.getUri());
 	            					KGNode nodeClassSubclassOf = dao.getKGNode(subclass.getUri(), KGNode.RELATIONSHIP_SUBCLASS_OF, directHitsOnInstance);

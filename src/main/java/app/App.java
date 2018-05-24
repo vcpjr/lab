@@ -5,13 +5,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dao.KGNodeDAO;
 import pojo.KGNode;
+import util.CSVReport;
 
 public class App {
 	private static final Logger LOG = LoggerFactory.getLogger(App.class);
@@ -37,15 +40,15 @@ public class App {
 			System.err.println("File not found!");
 			System.exit(1);
 		}
-        
-		
+
+
 		//STEP 1: SEMANTIC ENRICHMENT AND ACCOUNTING
-		
+
 		////////dao.deleteAll();
 		NerdExecutor nerdExecutor = new NerdExecutor(inputFile);
 		nerdExecutor.execute(confidence, language);
-		*/
-		
+		 */
+
 		/*
 		KGNodeDAO dao = new KGNodeDAO();
 
@@ -53,19 +56,35 @@ public class App {
 		//STEP 2: SEMANTIC DATA CUBE CONSTRUCTION
 		dao.deleteAllBridges();
 		createKeyBridges();
-		
+
 		BridgeExecutor bridgeService = new BridgeExecutor();
 		bridgeService.execute();
-	 
+
 		 */
-		
-		testGenerateRDF();
+
+		//testGenerateRDF();
+		ArrayList<Integer> rootIds = new ArrayList<>();
+		rootIds.add(14412); //Organization
+		rootIds.add(14395); //
+		rootIds.add(14392); //
+		rootIds.add(14374); //
+		rootIds.add(15363); //
+		rootIds.add(14408); //
+		rootIds.add(15280); //
+		rootIds.add(14524); //
+		rootIds.add(14383); //
+		rootIds.add(14449); //
+		rootIds.add(14385);
+
+		KGNodeDAO dao = new KGNodeDAO();
+		dao.deleteAllHierarchies();
+		testGenerateHierarchies(rootIds);
 
 		//TODO desenhar os caminhos -> Ver APIs para isso
 		//http://graphstream-project.org/
 		//http://jgrapht.org/
 		//http://bfo.com/download/
-		
+
 		/*
 		//TODO create the final step
 		//SemanticDataCubeExecutor semanticDataCubeExecutor = new SemanticDataCubeExecutor(hierarchyFile);
@@ -74,36 +93,75 @@ public class App {
 		 */
 	}
 
+	private static void testGenerateHierarchies(ArrayList<Integer> rootIds) {
+		LOG.info("***************************Hierarchies CSV generation**************************");
+		CSVReport hierarchyReport = new CSVReport("Hierarchy Root; #Max. Depth; #Total members; #Max Node Fan-Out");
+		KGNodeDAO dao = new KGNodeDAO();
+
+		for(int idRootHierarchy: rootIds){
+			KGNode root = dao.getById(idRootHierarchy, dao.getConnection());
+			HashMap<Integer, ArrayList<KGNode>> hierarchy = dao.getHierarchy(root, root, 1, null, dao.getConnection());
+
+			System.out.println("**********************************");
+			System.out.println("Hierarchy from: " + root.toString());
+			int totalMembers = 1;
+			int fanOut = 0;
+			for(int level: hierarchy.keySet()){
+				
+				System.out.println("** Level: " + level);
+				ArrayList<KGNode> classes = hierarchy.get(level);
+
+				for(KGNode node: classes){
+					System.out.println("**** " + node.toString());
+					totalMembers++;
+				}
+				if(level == 1){
+					fanOut = totalMembers;
+				}
+			}
+			
+			int maxDepth = hierarchy.keySet().size();
+			
+			String nodeText = String.format(Locale.US, "%s;%d;%d;%d", root.getLabel(), maxDepth, totalMembers, fanOut);
+			hierarchyReport.append(nodeText);
+			System.out.println("**********************************");
+		}
+    	hierarchyReport.generate(new File(outputPath, "hierarchies.csv"));
+    	LOG.info("***************************Hierarchies CSV end**************************");
+
+
+	}
+
 	private static void testGenerateRDF() {
 		KGNodeDAO dao = new KGNodeDAO();
 
 		ArrayList<KGNode> instances = dao.getByNodeType(KGNode.NODE_TYPE_INSTANCE);
 		String rdf = "";
-		
+
 		ArrayList<Integer> visitedTypeIds = new ArrayList<>();
 		ArrayList<Integer> generatedIdsLabels = new ArrayList<>();
-		
+
 		//Figuras e destacar as pontes
 		//1 - com a raiz
 		//2 - Organisation
 		//3- BusinessEnty
-		
+
 		Connection conn = dao.getConnection();
 		for(KGNode instance: instances){
 			ArrayList<KGNode> types = dao.getTypesByInstanceId(instance.getId(), conn);
-			
+
 			for(KGNode type: types){
 				//rdf += dao.createRDFLink(instance, type, KGNode.RELATIONSHIP_TYPE_OF_URI) + "\n";
 				if(!visitedTypeIds.contains(type.getId())){
 					System.out.println("Visiting Type: " + type.toString());
-					
+
 					//TODO owl:Thing está repetido
 					visitedTypeIds.add(type.getId());
 					rdf += dao.createLabel(type) + "\n";
 					generatedIdsLabels.add(type.getId());
 					ArrayList<KGNode> path = dao.getSuperclassesPath(type.getId(), dao.getConnection());
 					KGNode previous = type;
-					
+
 					if(path!= null){
 						for(KGNode nextNodeOnPath: path){
 							if(!generatedIdsLabels.contains(nextNodeOnPath.getId())){
@@ -117,7 +175,7 @@ public class App {
 				}
 			}
 		}
-		
+
 		generateRDFFile(rdf);
 		System.out.println("*********** RDF File Generated ***********");
 	}
@@ -224,25 +282,25 @@ public class App {
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:SoccerClub"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
 		//dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:SoccerPlayer"),"no gr class", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Software"),"gr:ProductOrService", KGNode.BRIDGE_TYPE_KEY);
-		//dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Species"),"no gr class", KGNode.BRIDGE_TYPE_KEY);
+		//dao.insertBridge(KGNodtee.getDBpediaClassURI("DBpedia:Species"),"no gr class", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:SportsLeague"),"gr:Brand", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:SportsTeam"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Stream"),"gr:Location", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:TelevisionShow"),"gr:ProductOrService", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:TelevisionStation"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
-//		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:TimePeriod"),"No gr class, but may be relevant for e-business", KGNode.BRIDGE_TYPE_KEY);
-//		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:TopicalConcept"),"no gr class", KGNode.BRIDGE_TYPE_KEY);
+		//		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:TimePeriod"),"No gr class, but may be relevant for e-business", KGNode.BRIDGE_TYPE_KEY);
+		//		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:TopicalConcept"),"no gr class", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Town"),"gr:Location", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:University"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:VideoGame"),"gr:ProductOrService", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Village"),"gr:Location", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Weapon"),"gr:ProductOrService", KGNode.BRIDGE_TYPE_KEY);
-//		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Website"),"No gr class, but may be relevant for e-business", KGNode.BRIDGE_TYPE_KEY);
+		//		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Website"),"No gr class, but may be relevant for e-business", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Work"),"gr:Product", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Wrestler"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Writer"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:WrittenWork"),"gr:ProductOrService", KGNode.BRIDGE_TYPE_KEY);
-//		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Year"),"No gr class, but may be relevant for e-business", KGNode.BRIDGE_TYPE_KEY);
+		//		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Year"),"No gr class, but may be relevant for e-business", KGNode.BRIDGE_TYPE_KEY);
 	}
 
 	public static boolean containsLabel(final List<KGNode> list, final String label){
