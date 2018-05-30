@@ -1,6 +1,7 @@
 package service;
 
 import java.io.File;
+import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,11 +35,11 @@ public class BridgeExecutor {
 	private static final File outputPath = new File(APP_ROOT,"output");
 	private KGNodeDAO dao = new KGNodeDAO();
 
-	// K: Instância ou classe da DBpedia
+	// K: Id da Instância ou classe da DBpedia
 	// V: Nome da classe da ontologia de alto nível
-	private HashMap<KGNode, String> keyBridges;
-	private HashMap<KGNode, String> newBridges;
-	private HashMap<KGNode, String> inconsistentBridges;
+	private HashMap<Integer, String> keyBridges;
+	private HashMap<Integer, String> newBridges;
+	private HashMap<Integer, String> inconsistentBridges;
 
 	private KGNode root;
 
@@ -49,9 +50,10 @@ public class BridgeExecutor {
 
 	public void execute(){
 		//TODO teste com a raiz variável, de acordo com os termos encontrados em cada tweet
-		for(KGNode node: keyBridges.keySet()){
-			this.root = node;
-			this.checkComplete(this.root, keyBridges.get(node));
+		for(Integer idNode: keyBridges.keySet()){
+			this.root = dao.getById(idNode, dao.getConnection());
+
+			this.checkComplete(this.root, keyBridges.get(idNode));
 		}
 
 		newBridges = dao.getBridges(KGNode.BRIDGE_TYPE_NEW);
@@ -67,16 +69,20 @@ public class BridgeExecutor {
 	}
 
 	private void generateReportCSV() {
-		CSVReport bridgeReport = new CSVReport("Resource; #Direct Hits; #Indirect Hits (Type); #Indirect Hits (Subclass); Accumulated; GoodRelations (gr:) class; Type");
+		CSVReport bridgeReport = new CSVReport("Resource; #Direct Hits; #Indirect Hits (Type); #Indirect Hits (Subclass); Accumulated; GoodRelations (gr:) class; Type; #Instances associated");
 
 		LOG.info("******************BridgeExecutor keyBridges CSV generation*****************");
 		String nodeText;
-		HashMap<KGNode, String> allBridges = dao.getBridges(null);
+		HashMap<Integer, String> allBridges = dao.getBridges(null);
 		LOG.info("******************BridgeExecutor newBridges CSV generation*****************");
 
-		for(KGNode n: allBridges.keySet()){
+		for(Integer id: allBridges.keySet()){
+			Connection conn = dao.getConnection();
+			KGNode n = dao.getById(id, conn);
+			ArrayList<KGNode> instances = dao.getInstancesByTypeId(n.getId(), conn);
+			
 			int accumulatedHits = n.getDirectHits() + n.getIndirectHitsSubclassOf() + n.getIndirectHitsType();
-			nodeText = String.format(Locale.US, "%s;%d;%d;%d;%d;%s;%s", n.getLabel(), n.getDirectHits(), n.getIndirectHitsType(), n.getIndirectHitsSubclassOf(), accumulatedHits, allBridges.get(n), n.getBridgeType());
+			nodeText = String.format(Locale.US, "%s;%d;%d;%d;%d;%s;%s;%d", n.getLabel(), n.getDirectHits(), n.getIndirectHitsType(), n.getIndirectHitsSubclassOf(), accumulatedHits, allBridges.get(n.getId()), n.getBridgeType(), instances.size());
 			bridgeReport.append(nodeText);
 		}
 		String postfixFilename = String.format(Locale.US,"%s.csv",LocalDate.now().toString());
@@ -97,26 +103,26 @@ public class BridgeExecutor {
 	private void checkComplete(KGNode node, String domainClass){
 
 		KGNodeDAO dao = new KGNodeDAO();
+		ArrayList<KGNode> directSubclassesFromNode = dao.getDirectSubclassesFromNode(node.getId(), dao.getConnection());
 
 		//TODO testar (18/05/18)
 		//TODO DESCER e não subir na hierarquia
-		ArrayList<KGNode> superclassesFromNode = dao.getSuperclassesPath(node.getId(), dao.getConnection());
-		List<KGNode> nodesFromKeyBridges = new ArrayList<KGNode>(keyBridges.keySet());
+		List<Integer> idsFromKeyBridges = new ArrayList<Integer>(keyBridges.keySet());
 
-		if(superclassesFromNode.isEmpty()) {
+		if(directSubclassesFromNode.isEmpty()) {
 			dao.insertBridge(node.getUri(), domainClass, KGNode.BRIDGE_TYPE_NEW);
 		}else {
-			for(int i = 0; i< superclassesFromNode.size(); i++){
-				KGNode childNode = superclassesFromNode.get(i);
+			for(KGNode childNode: directSubclassesFromNode){
+				//TODO o erro está AQUI (28/05/18) -> SALVAR NO BANCO? 
 				if(childNode != null && !childNode.getLabel().contains(KGNode.URL_ROOT)){
-					String childDomainClass = keyBridges.get(childNode);
+					String childDomainClass = keyBridges.get(childNode.getId());
 					if(childDomainClass == null){
 						checkComplete(childNode, domainClass);
 					}else{
-						if(containsLabel(nodesFromKeyBridges, childNode.getLabel())){
+						if(idsFromKeyBridges.contains(childNode.getId())){
 							LOG.info("** Domain class: "+ domainClass + "exists on keyBridges");
-							if(keyBridges.get(childNode) != null 
-									&& keyBridges.get(childNode).equals(domainClass)){
+							if(keyBridges.get(childNode.getId()) != null 
+									&& keyBridges.get(childNode.getId()).equals(domainClass)){
 								dao.insertBridge(childNode.getUri(), domainClass, KGNode.BRIDGE_TYPE_NEW);
 							}else{
 								dao.insertBridge(childNode.getUri(), domainClass, KGNode.BRIDGE_TYPE_INCONSISTENT);
@@ -126,9 +132,10 @@ public class BridgeExecutor {
 						}
 					}
 				}
+
 			}
+			dao.closeConnection();
 		}
-		dao.closeConnection();
 	}
 
 	public boolean containsLabel(final List<KGNode> list, final String label){

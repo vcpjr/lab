@@ -41,8 +41,8 @@ public class KGNodeDAO {
 		return ret;
 	}
 
-	public int insertSubclass(int nodeClassId, KGNode nodeSuperclass) {
-		String sql = "INSERT INTO KGNODE_SUBCLASS (IDNODE, IDSUBCLASS) VALUES (?, ?)";
+	public int insertSuperclass(int nodeClassId, KGNode nodeSuperclass) {
+		String sql = "INSERT INTO KGNODE_SUPERCLASS (IDNODE, IDSUPERCLASS) VALUES (?, ?)";
 		Integer superclassId = null;
 
 		if(nodeSuperclass.getId() == null){
@@ -51,8 +51,8 @@ public class KGNodeDAO {
 			superclassId = nodeSuperclass.getId();
 		}
 
-		Integer kgNodeSubclass_id = getKGNode_SubclassId(nodeClassId, superclassId);
-		if(kgNodeSubclass_id == null){//New relationship
+		Integer kgNodeSuperclass_id = getKGNode_SuperclassId(nodeClassId, superclassId);
+		if(kgNodeSuperclass_id == null){//New relationship
 			this.getConnection();
 			try {
 				PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -101,11 +101,18 @@ public class KGNodeDAO {
 		KGNode node = this.getByURI(uri);
 
 		if(node == null){
-			//TODO tratar
 			System.out.println("KGNode not found: " + uri);
 			return -1;
 		}else{
-			String sql = "INSERT INTO BRIDGE (IDNODE, HIGH_LEVEL_CLASS, TYPE) VALUES (?, ?, ?)";
+			int idBridge = this.getIdBridgeByIdNode(node.getId());
+			
+			String sql;
+			if(idBridge > 0){
+				sql = " UPDATE BRIDGE SET IDNODE = ?, HIGH_LEVEL_CLASS = ?, TYPE = ? ";
+				sql += " WHERE ID = ? ";
+			}else{
+				sql = "INSERT INTO BRIDGE (IDNODE, HIGH_LEVEL_CLASS, TYPE) VALUES (?, ?, ?)";
+			}
 			this.getConnection();
 			int newId = -1;
 			try {
@@ -113,6 +120,10 @@ public class KGNodeDAO {
 				stmt.setInt(1, node.getId());
 				stmt.setString(2, highLevelClass);
 				stmt.setString(3, type);
+				
+				if(idBridge > 0){
+					stmt.setInt(4, idBridge);
+				}
 				stmt.executeUpdate();
 
 				ResultSet rs = stmt.getGeneratedKeys();
@@ -127,6 +138,31 @@ public class KGNodeDAO {
 				ConnectionFactory.closeConnection(this.connection);
 			}
 		}
+	}
+
+	private int getIdBridgeByIdNode(int nodeId) {
+		
+		int bridgeId = -1;
+		String sql = " SELECT B.ID FROM BRIDGE B WHERE B.IDNODE = ? ";
+		this.getConnection();
+		try {
+			PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			stmt.setInt(1, nodeId);
+			stmt.setMaxRows(1);
+
+			ResultSet rs = stmt.executeQuery();
+			while(rs.next()){
+				bridgeId = rs.getInt("ID");
+			}
+
+			stmt.close();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		} finally {
+			ConnectionFactory.closeConnection(this.connection);
+		}
+
+		return bridgeId;
 	}
 
 	private Integer getKGNode_TypeId(int nodeInstanceId, Integer classTypeId) {
@@ -154,9 +190,9 @@ public class KGNodeDAO {
 		return kgNodeType_Id;
 	}
 
-	private Integer getKGNode_SubclassId(int nodeClassId, Integer superclassId) {
-		Integer kgNodeSubclass_Id = null;
-		String sql = "SELECT ID FROM KGNODE_SUBCLASS WHERE IDNODE = ? AND IDSUBCLASS = ?";
+	private Integer getKGNode_SuperclassId(int nodeClassId, Integer superclassId) {
+		Integer kgNodeSuperclass_Id = null;
+		String sql = "SELECT ID FROM KGNODE_SUPERCLASS WHERE IDNODE = ? AND IDSUPERCLASS = ?";
 		this.getConnection();
 		try {
 			PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -166,7 +202,7 @@ public class KGNodeDAO {
 
 			ResultSet rs = stmt.executeQuery();
 			while(rs.next()){
-				kgNodeSubclass_Id = rs.getInt("ID");
+				kgNodeSuperclass_Id = rs.getInt("ID");
 			}
 
 			stmt.close();
@@ -176,7 +212,7 @@ public class KGNodeDAO {
 			ConnectionFactory.closeConnection(this.connection);
 		}
 
-		return kgNodeSubclass_Id;
+		return kgNodeSuperclass_Id;
 	}
 
 	public int insert(KGNode node) {
@@ -262,7 +298,8 @@ public class KGNodeDAO {
 		}
 
 		KGNode node = null;
-		String sql = "SELECT n.* FROM KGNode n WHERE n.id = ?";
+		String sql = "SELECT n.*, b.type as bridgeType FROM KGNode n LEFT JOIN BRIDGE b on n.id = b.IDNODE "
+				+ " WHERE n.id = ? ";
 		try {
 			PreparedStatement stmt = connection.prepareStatement(sql);
 			stmt.setInt(1, id);
@@ -316,6 +353,9 @@ public class KGNodeDAO {
 			node.setDirectHits(rs.getInt("directHits"));
 			node.setIndirectHitsType(rs.getInt("indirectHitsType"));
 			node.setIndirectHitsSubclassOf(rs.getInt("indirectHitsSubclassOf"));
+			
+			//Bridges
+			node.setBridgeType(rs.getString("bridgeType"));
 		} catch (SQLException e) {
 
 		}
@@ -345,7 +385,7 @@ public class KGNodeDAO {
 	}
 
 	/**
-	 * Given a class node, return the path to Thing through subclassOf relationship
+	 * Given a class node, return the ASCENDING path to Thing through subclassOf relationship
 	 * 
 	 * @param idActualCLass
 	 * @return classes a list of classes node -> THING
@@ -355,7 +395,7 @@ public class KGNodeDAO {
 		ArrayList<KGNode> classesFullPath = this.getSuperclassesPath(idClassWithTypeRelationship, conn);
 
 		if(classesFullPath == null || classesFullPath.isEmpty() || classes.isEmpty()){
-			String sql = "SELECT S.IDSUBCLASS FROM KGNODE_SUBCLASS S WHERE S.IDNODE = ?";
+			String sql = "SELECT S.IDSUPERCLASS FROM KGNODE_SUPERCLASS S WHERE S.IDNODE = ?";
 			try {
 				PreparedStatement stmt = connection.prepareStatement(sql);
 				stmt.setInt(1, idActualCLass);
@@ -384,9 +424,66 @@ public class KGNodeDAO {
 	}
 
 	/**
+	 * Método recursivo que retorna todos as classes (subclasses ou types) abaixo de um determinado nodo
+	 * 
+	 * @param node o nodo de partida da recursão
+	 * @return Map<Integer, ArrayList<Node>>, onde:
+	 * 	K: nível abaixo do (nível do nodo é 0)
+	 *  V: lista de subclasses/types no nível encontrado 
+	 */
+	/**
 	 * Returns a map of KGNodes, where the key is the number of the level descending from root to the leaves (types) 
 	 * @param idRoot id from KGNode root from hierarchy (directly associated to Thing)
 	 * @return
+	 */
+	public HashMap<Integer, ArrayList<KGNode>> getSubclasses(KGNode initialNode, KGNode actualNode, int actualLevel, HashMap<Integer, ArrayList<KGNode>> map, Connection conn){
+
+		if(initialNode == actualNode){
+			map = new HashMap<>();
+		}
+		
+		this.addOnSubclassLevel(map, actualNode, actualLevel);
+		
+		System.out.println("Get subclasses from: " + actualNode.toString());
+		ArrayList<KGNode> subclassesFromLevel = this.getDirectSubclassesFromNode(actualNode.getId(), conn);
+		
+		if(subclassesFromLevel != null && !subclassesFromLevel.isEmpty()){
+			int nextLevel = actualLevel + 1;
+			for(KGNode subclassNodeFromLevel: subclassesFromLevel){
+				this.addOnSubclassLevel(map, subclassNodeFromLevel, nextLevel);
+				map = getSubclasses(initialNode, subclassNodeFromLevel, nextLevel, map, conn);	
+			}
+		}
+
+		return map;
+	}
+	
+	private void addOnSubclassLevel(HashMap<Integer, ArrayList<KGNode>> map, KGNode node, int level) {
+		
+		//TODO TESTAR, tem ERRO!!
+		if(map.containsKey(level)){
+			ArrayList<KGNode> classes = map.get(level);
+			if(!containsLabel(classes, node.getLabel())){
+				System.out.println("Add node " + node.toString() + "on level " + level);
+				classes.add(node);
+				//this.insertNodeOnHierarchy(node, level, nodeRoot);
+			}
+		}else{//Cria um novo nível
+			ArrayList<KGNode> classes = new ArrayList<>();
+			classes.add(node);
+			System.out.println("Add node " + node.toString() + "on NEW level " + level);
+			map.put(level, classes);
+			//TODO salvar caminho de subclasses no banco?
+			//this.insertNodeOnHierarchy(node, level, nodeRoot);
+		}
+
+	}
+
+
+	/**
+	 * Returns a map of KGNodes, where the key is the number of the level descending from root to the leaves (types) 
+	 * @param idRoot id from KGNode root from hierarchy (directly associated to Thing)
+	 * @return hierarchy
 	 */
 	public HashMap<Integer, ArrayList<KGNode>> getHierarchy(KGNode nodeRoot, KGNode actualNode, int actualLevel, HashMap<Integer, ArrayList<KGNode>> hierarchy, Connection conn){
 
@@ -394,12 +491,12 @@ public class KGNodeDAO {
 			hierarchy = this.getHierarchyFromTable(nodeRoot);
 		}
 
-		ArrayList<KGNode> subclassesFromActualLevel = this.getDirectSubclassesFromNode(actualNode.getId(), conn);
+		ArrayList<KGNode> superclassesFromActualLevel = this.getDirectSuperclassesFromNode(actualNode.getId(), conn);
 
 		int nextLevel = actualLevel + 1;
-		for(KGNode subclassNode: subclassesFromActualLevel){
-			this.addOnHierarchy(hierarchy, subclassNode, nodeRoot, actualLevel);
-			hierarchy = this.getHierarchy(nodeRoot, subclassNode, nextLevel, hierarchy, conn);
+		for(KGNode superclassNode: superclassesFromActualLevel){
+			this.addOnHierarchy(hierarchy, superclassNode, nodeRoot, actualLevel);
+			hierarchy = this.getHierarchy(nodeRoot, superclassNode, nextLevel, hierarchy, conn);
 		}
 		return hierarchy;
 	}
@@ -420,7 +517,7 @@ public class KGNodeDAO {
 		}
 
 	}
-
+	
 	private HashMap<Integer, ArrayList<KGNode>> getHierarchyFromTable(KGNode nodeRoot) {
 		HashMap<Integer, ArrayList<KGNode>> hierarchy = new HashMap<>();
 
@@ -453,6 +550,8 @@ public class KGNodeDAO {
 		} 
 		return hierarchy;
 	}
+
+
 
 	private void insertNodeOnHierarchy(KGNode node, int level, KGNode nodeRoot) {
 		String sql = "INSERT INTO HIERARCHY (IDROOT, IDNODE, LEVEL) VALUES (?, ?, ?)";
@@ -546,6 +645,33 @@ public class KGNodeDAO {
 			}
 		}
 	}
+	
+	public ArrayList<KGNode> getInstancesByTypeId(Integer typeId, Connection conn) {
+		this.getConnection();
+
+		ArrayList<KGNode> instances = new ArrayList<>();
+		String sql = "SELECT T.IDNODE FROM KGNODE_TYPE T WHERE T.IDTYPE = ?";
+		try {
+			PreparedStatement stmt = connection.prepareStatement(sql);
+			stmt.setInt(1, typeId);
+
+			int instanceNodeId = -1;
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				instanceNodeId = rs.getInt(1);
+				KGNode instance = this.getById(instanceNodeId, conn);
+				instances.add(instance);
+			}
+
+			stmt.close();
+			return instances;
+		} catch (SQLException e) {
+			return null;
+		} finally {
+			ConnectionFactory.closeConnection(this.connection);
+		}
+	}
+
 
 	public ArrayList<KGNode> getTypesByInstanceId(Integer instanceNodeId, Connection conn) {
 		this.getConnection();
@@ -572,12 +698,44 @@ public class KGNodeDAO {
 			ConnectionFactory.closeConnection(this.connection);
 		}
 	}
+
+	public ArrayList<KGNode> getDirectSuperclassesFromNode(Integer nodeId, Connection conn) {
+		if(conn == null){
+			this.getConnection();
+		}
+		
+		//TODO testar
+		ArrayList<KGNode> superclasses = new ArrayList<>();
+		String sql = "SELECT s.idsuperclass from kgnode_superclass s where s.idnode = ?";
+		try {
+			PreparedStatement stmt = connection.prepareStatement(sql);
+			stmt.setInt(1, nodeId);
+
+			int idNode = -1;
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				idNode = rs.getInt(1);
+				KGNode superclassNode = this.getById(idNode, conn);
+				superclasses.add(superclassNode);
+			}
+
+			stmt.close();
+			return superclasses;
+		} catch (SQLException e) {
+			return null;
+		} finally {
+			ConnectionFactory.closeConnection(this.connection);
+		}
+	}
 	
 	public ArrayList<KGNode> getDirectSubclassesFromNode(Integer nodeId, Connection conn) {
-		this.getConnection();
-
+		
+		if(conn == null){
+			this.getConnection();
+		}
+		//TODO testar
+		String sql = "SELECT S.IDNODE FROM KGNODE_SUPERCLASS S WHERE S.IDSUPERCLASS = ?";
 		ArrayList<KGNode> subclasses = new ArrayList<>();
-		String sql = "select s.idnode from kgnode_subclass s where s.idsubclass = ?";
 		try {
 			PreparedStatement stmt = connection.prepareStatement(sql);
 			stmt.setInt(1, nodeId);
@@ -591,6 +749,13 @@ public class KGNodeDAO {
 			}
 
 			stmt.close();
+			
+			String msg = "Subclasses from " + this.getById(nodeId, conn).toString() + ": ";
+			for(KGNode sub: subclasses){
+				msg += "," + sub.toString();
+			}
+			System.out.println(msg);
+			
 			return subclasses;
 		} catch (SQLException e) {
 			return null;
@@ -608,8 +773,8 @@ public class KGNodeDAO {
 		ConnectionFactory.closeConnection(this.connection);
 	}
 
-	public HashMap<KGNode, String> getBridges(String type) {
-		HashMap<KGNode, String> map = new HashMap<>();
+	public HashMap<Integer, String> getBridges(String type) {
+		HashMap<Integer, String> map = new HashMap<>();
 		this.getConnection();
 
 		String sql;
@@ -624,9 +789,7 @@ public class KGNodeDAO {
 			while (rs.next()) {
 				int idNode = rs.getInt(1);
 				String highLevelClass = rs.getString(2);
-				KGNode node = this.getById(idNode, null);
-				node.setBridgeType(rs.getString(3));
-				map.put(node, highLevelClass);
+				map.put(idNode, highLevelClass);
 			}
 
 			stmt.close();
@@ -639,11 +802,11 @@ public class KGNodeDAO {
 	}
 
 	public ArrayList<KGNode> getSuperclassesOf_SpotlightQuery(KGNode nodeClassType) {
-		ArrayList<KGNode> subclasses = new ArrayList<>();
+		ArrayList<KGNode> superclasses = new ArrayList<>();
 
 		String querySPARQL =  getQueryPrefix() + 
-				" select ?subclass " + 
-				" where {<" + nodeClassType.getUri() + "> rdfs:subClassOf ?subclass}";
+				" select ?superclass " + 
+				" where {<" + nodeClassType.getUri() + "> rdfs:subClassOf ?superclass}";
 
 		Query query = QueryFactory.create(querySPARQL);
 		QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
@@ -653,7 +816,7 @@ public class KGNodeDAO {
 
 			ArrayList<String> uris = new ArrayList<>();
 			while(results.hasNext()) {
-				boolean addSubclass = false;
+				boolean addSuperclass = false;
 				String adjacentURI = results.next().toString();
 
 				if(!uris.contains(adjacentURI)){
@@ -661,20 +824,20 @@ public class KGNodeDAO {
 
 					if(!adjacentURI.contains(KGNode.URL_ROOT)){
 						if(adjacentURI.contains("dbpedia")){
-							String[] res = adjacentURI.split("subclass = <");
+							String[] res = adjacentURI.split("superclass = <");
 							res = res[1].split(">");
 							adjacentURI = res[0];
-							addSubclass = true;
+							addSuperclass = true;
 						}
 					}else{
 						adjacentURI = KGNode.URL_ROOT;
-						addSubclass = true;
+						addSuperclass = true;
 					}
 					//Pode ser que a classe já exista
-					KGNode subclass = getKGNode(adjacentURI, KGNode.RELATIONSHIP_SUBCLASS_OF, nodeClassType.getIndirectHitsType());
-					if(subclass != null &&!containsLabel(subclasses, subclass.getLabel()) && addSubclass){
-						subclasses.add(subclass);
-						msg += "- " + subclass.getLabel() + "\n"; 
+					KGNode superclass = getKGNode(adjacentURI, KGNode.RELATIONSHIP_SUBCLASS_OF, nodeClassType.getIndirectHitsType());
+					if(superclass != null &&!containsLabel(superclasses, superclass.getLabel()) && addSuperclass){
+						superclasses.add(superclass);
+						msg += "- " + superclass.getLabel() + "\n"; 
 					}
 				}
 			}
@@ -683,7 +846,7 @@ public class KGNodeDAO {
 		}
 		msg += "-------------------------------------";
 		System.out.println(msg);
-		return subclasses;
+		return superclasses;
 	}
 
 	public static boolean containsLabel(List<KGNode> list, String label){
@@ -740,16 +903,16 @@ public class KGNodeDAO {
 	}
 
 	public void deleteAll() {
-		deleteAllSubclasses();
+		deleteAllSuperclasses();
 		deleteAllTypes();
 		deleteAllBridges();
 		deleteAllSuperclassesPaths();
 		deleteAllKGNodes();
 	}
 
-	private void deleteAllSubclasses() {
+	private void deleteAllSuperclasses() {
 		this.getConnection();
-		String sql = "DELETE FROM KGNode_Subclass WHERE 1 = 1; ";
+		String sql = "DELETE FROM KGNode_Superclass WHERE 1 = 1; ";
 		try {
 			PreparedStatement stmt = connection.prepareStatement(sql);
 			stmt.executeUpdate();

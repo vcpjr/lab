@@ -100,7 +100,7 @@ public class NerdExecutor {
 	            				subclasses.forEach(subclass ->{
 	            					//System.out.println("Subclass: " + subclass.getUri());
 	            					KGNode nodeClassSubclassOf = dao.getKGNode(subclass.getUri(), KGNode.RELATIONSHIP_SUBCLASS_OF, directHitsOnInstance);
-	            					dao.insertSubclass(classTypeId, nodeClassSubclassOf);
+	            					dao.insertSuperclass(classTypeId, nodeClassSubclassOf);
 	            				});
 	            			}
 	            		});

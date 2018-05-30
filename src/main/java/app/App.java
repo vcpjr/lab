@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import dao.KGNodeDAO;
 import pojo.KGNode;
+import service.BridgeExecutor;
 import util.CSVReport;
 
 public class App {
@@ -49,7 +50,7 @@ public class App {
 		nerdExecutor.execute(confidence, language);
 		 */
 
-		/*
+		
 		KGNodeDAO dao = new KGNodeDAO();
 
 		//TODO executar o STEP 2 daqui em diante
@@ -60,9 +61,8 @@ public class App {
 		BridgeExecutor bridgeService = new BridgeExecutor();
 		bridgeService.execute();
 
-		 */
-
 		//testGenerateRDF();
+		/*
 		ArrayList<Integer> rootIds = new ArrayList<>();
 		rootIds.add(14412); //Organization
 		rootIds.add(14395); //
@@ -79,6 +79,7 @@ public class App {
 		KGNodeDAO dao = new KGNodeDAO();
 		dao.deleteAllHierarchies();
 		testGenerateHierarchies(rootIds);
+		/*
 
 		//TODO desenhar os caminhos -> Ver APIs para isso
 		//http://graphstream-project.org/
@@ -195,6 +196,9 @@ public class App {
 	private static void createKeyBridges() {
 		//TODO ler de arquivo??
 		KGNodeDAO dao = new KGNodeDAO();
+		
+		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:SportsTeam"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
+		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Organisation"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
 		//dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Agent"),"more general than gr classes", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:AdministrativeRegion"),"gr:Location", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Album"),"gr:ProductOrService", KGNode.BRIDGE_TYPE_KEY);
@@ -257,7 +261,7 @@ public class App {
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Newspaper"),"gr:ProductOrService", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Non-ProfitOrganisation"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:OfficeHolder"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
-		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Organisation"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
+		
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:PeriodicalLiterature"),"gr:ProductOrService", KGNode.BRIDGE_TYPE_KEY);
 		//dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Person"),"No gr class, but may be relevant for e-business", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Place"),"gr:Location", KGNode.BRIDGE_TYPE_KEY);
@@ -284,7 +288,7 @@ public class App {
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Software"),"gr:ProductOrService", KGNode.BRIDGE_TYPE_KEY);
 		//dao.insertBridge(KGNodtee.getDBpediaClassURI("DBpedia:Species"),"no gr class", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:SportsLeague"),"gr:Brand", KGNode.BRIDGE_TYPE_KEY);
-		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:SportsTeam"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
+		
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:Stream"),"gr:Location", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:TelevisionShow"),"gr:ProductOrService", KGNode.BRIDGE_TYPE_KEY);
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:TelevisionStation"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
