@@ -1,9 +1,85 @@
 package app;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import dao.KGNodeDAO;
 import pojo.KGNode;
 
 public class Test {
+
+private static HashMap<String,String> kb = new HashMap<>();
+private static HashMap<String,String> nb = new HashMap<>();
+private static HashMap<String,String> ib = new HashMap<>();
+private static ArrayList<String> hierarchy = new ArrayList<>();
+
+public static void main(String[] args) {
+	setUp();
+	String r = "Thing";
+	int hierarchyIndex = 0;
+	String c = null;
+	checkComplete(r, c, hierarchyIndex);
+	
+	System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%");
+	System.out.println("IBs: " + ib.size());
+	System.out.println("NBs: " + nb.size());
+	System.out.println("KBs: " + kb.size());
+
+	for (String key: kb.keySet()) {
+		System.out.println("KB: " + key + " - " + kb.get(key));
+	}
+	
+	for (String key: nb.keySet()) {
+		System.out.println("NB: " + key + " - " + nb.get(key));
+	}
+	
+	for (String key: ib.keySet()) {
+		System.out.println("IB: " + key + " - " + ib.get(key));
+	}
+	
+	System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%");
+
+}
+
+public static void setUp(){
+	
+	hierarchy.add("Thing");
+	hierarchy.add("Organization");
+	hierarchy.add("Broadcaster");
+	hierarchy.add("RadioStation");
+
+	kb.put("Organization", "BusinessEntity");
+	kb.put("RadioStation", "Brand");
+}
+	
+public static void checkComplete(String r, String c, int hierarchyIndex){
+	String dc = kb.get(r);
+	if(c == null){
+		if(dc != null){
+			nb.put(r,dc);
+			c = dc;
+		}
+	}else{
+		if(dc != null){
+			ib.put(r,dc);
+		}
+	}
+	hierarchyIndex++;
+	if(hierarchyIndex < hierarchy.size()){
+		String child = hierarchy.get(hierarchyIndex);
+		checkComplete(child, c, hierarchyIndex);
+	}
+}
+
+private static ArrayList<String> getChildren(int index) {
+	ArrayList<String> res = new ArrayList<>();
+	
+	for(int i = index; i< hierarchy.size(); i++){
+		res.add(hierarchy.get(i));
+	}
+	
+	return res;
+}
 
 public void foo(){
  KGNodeDAO dao = new KGNodeDAO();
