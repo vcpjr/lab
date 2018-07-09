@@ -13,8 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dao.KGNodeDAO;
+import dao.TweetDAO;
 import pojo.KGNode;
-import service.BridgeExecutor;
+import service.NerdExecutor;
 import util.CSVReport;
 
 public class App {
@@ -23,7 +24,12 @@ public class App {
 	private static final File outputPath = new File(APP_ROOT,"output");
 
 	public static void main(String[] args) {
-		/*
+		KGNodeDAO dao = new KGNodeDAO();
+		TweetDAO tDAO = new TweetDAO();
+		
+		dao.deleteAll();
+		tDAO.deleteAll();
+		
 		if (args.length < 3) {
 			System.err.println("Parameters not found. For run this application use follow command.");
 			System.out.println("./run.sh <dataset> <confidence_level> <language>\n");
@@ -42,18 +48,11 @@ public class App {
 			System.exit(1);
 		}
 
-
 		//STEP 1: SEMANTIC ENRICHMENT AND ACCOUNTING
-
-		////////dao.deleteAll();
 		NerdExecutor nerdExecutor = new NerdExecutor(inputFile);
 		nerdExecutor.execute(confidence, language);
-		 */
-
-
-		KGNodeDAO dao = new KGNodeDAO();
-
-		//TODO executar o STEP 2 daqui em diante
+		
+		/*
 		//STEP 2: SEMANTIC DATA CUBE CONSTRUCTION
 		dao.deleteAllBridges();
 		createKeyBridges();

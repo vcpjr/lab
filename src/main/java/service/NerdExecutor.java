@@ -31,7 +31,8 @@ public class NerdExecutor {
 
     public NerdExecutor(File datasetFile) {
         rest = new SpotlightRest();
-        tweets = TweetFileReader.readTweetsFromFile(datasetFile);
+        //tweets = TweetFileReader.readTweetsFromTxtFile(datasetFile);
+        tweets = TweetFileReader.readTweetsFromPepsiDatasetFile(datasetFile);
         String filePath = datasetFile.getName();
         inputFilename = filePath.split("\\.")[0];
     }
@@ -89,7 +90,7 @@ public class NerdExecutor {
 	            		
 	            		resource.getTypes().forEach(classType-> {
 	            			String dbpediaTypeURI = KGNode.getDBpediaClassURI(classType);
-	            			//System.out.println("Type: " + dbpediaTypeURI);
+	            			System.out.println("Type: " + dbpediaTypeURI);
 	            			
 	            			if(dbpediaTypeURI != null){
 	            				KGNode nodeClassType = dao.getKGNode(dbpediaTypeURI, KGNode.RELATIONSHIP_TYPE_OF, directHitsOnInstance);

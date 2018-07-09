@@ -1,5 +1,6 @@
 package pojo;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 import com.google.gson.annotations.SerializedName;
@@ -20,6 +21,8 @@ public class Tweet {
 	
 	@SerializedName("isretweet")
 	private boolean isRetweet;
+	
+	private ArrayList<KGNode> annotatedResources;
 	
 	public Tweet() {
 		
@@ -63,5 +66,13 @@ public class Tweet {
 	}
 	public void setRetweet(boolean isRetweet) {
 		this.isRetweet = isRetweet;
+	}
+
+	public ArrayList<KGNode> getAnnotatedResources() {
+		return annotatedResources;
+	}
+
+	public void setAnnotatedResources(ArrayList<KGNode> annotatedResources) {
+		this.annotatedResources = annotatedResources;
 	}
 }

@@ -15,7 +15,7 @@ public class TweetFileReaderTest {
         ClassLoader classLoader = getClass().getClassLoader();
         File resourceFile = new File(classLoader.getResource("test/DatasetTweetsJSON.txt").getFile());
 
-        List<Tweet> tweets = TweetFileReader.readTweetsFromFile(resourceFile);
+        List<Tweet> tweets = TweetFileReader.readTweetsFromTxtFile(resourceFile);
         Assert.assertEquals(3, tweets.size());
         tweets.forEach(tweet -> Assert.assertFalse(tweet.getText().contains("|")));
     }
