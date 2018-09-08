@@ -75,4 +75,10 @@ public class Tweet {
 	public void setAnnotatedResources(ArrayList<KGNode> annotatedResources) {
 		this.annotatedResources = annotatedResources;
 	}
+
+	@Override
+	public String toString() {
+		return "Tweet [id=" + id + ", userId=" + userId + ", text=" + text + ", creationDate=" + creationDate
+				+ ", isRetweet=" + isRetweet + ", annotatedResources=" + annotatedResources + "]";
+	}
 }

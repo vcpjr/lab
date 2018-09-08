@@ -1,12 +1,13 @@
 package service;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import org.slf4j.Logger;
@@ -18,9 +19,14 @@ import util.JsonConverter;
 class SpotlightRest {
     private static final Logger LOG = LoggerFactory.getLogger(SpotlightRest.class);
 
+    //Spotlight instalado via docker
+    //https://github.com/dbpedia-spotlight/spotlight-docker
     private static String PROTOCOL = "http";
-    private static String HOST = "model.dbpedia-spotlight.org";
-    private static String ANNOTATE_PATH = "/{language}/annotate";
+    private static String HOST = "localhost:2228/rest";
+    private static String ANNOTATE_PATH = "/annotate";
+ 
+   // private static String HOST = "model.dbpedia-spotlight.org";
+//    private static String ANNOTATE_PATH = "/annotate";
 
     private Annotation httpHandle(HttpURLConnection conn) throws IOException, UnexpectedStatusCodeException {
         if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -47,8 +53,9 @@ class SpotlightRest {
     }
 
     private void sendRequest(HttpURLConnection conn, String params) throws IOException {
-        OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
-        writer.write(params);
+    	DataOutputStream writer = new DataOutputStream(conn.getOutputStream());
+    	byte[] postData = params.getBytes( StandardCharsets.UTF_8 );
+        writer.write(postData);
         writer.flush();
         writer.close();
     }
@@ -56,6 +63,8 @@ class SpotlightRest {
     Annotation getAnnotation(String text, float confidence, String language)
         throws UnexpectedStatusCodeException {
 
+    	
+    	
         String path = ANNOTATE_PATH.replace("{language}", language);
         HttpURLConnection conn = null;
         Annotation annotation = null;
@@ -66,10 +75,15 @@ class SpotlightRest {
 
         try {
             URL url = new URL(PROTOCOL, HOST, path);
+            url = new URL("http://localhost:2228/rest/annotate");
+            //String s = JsonPath.parse(new URL("http://localhost:2228/rest/annotate")).jsonString();
+            
             conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
+            conn.setRequestMethod("POST");
             conn.setRequestProperty("Accept", "application/json");
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded"); 
             conn.setDoOutput(true);
+//            conn.
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
             String encodedText = URLEncoder.encode(text, "UTF-8");
@@ -79,7 +93,7 @@ class SpotlightRest {
             sendRequest(conn, params);
             annotation = httpHandle(conn);
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error("Unexpected error.", e);
             e.printStackTrace();
         } finally {

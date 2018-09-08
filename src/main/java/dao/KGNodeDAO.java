@@ -823,6 +823,7 @@ public class KGNodeDAO {
 					uris.add(adjacentURI);
 
 					if(!adjacentURI.contains(KGNode.URL_ROOT)){
+						//TODO parametrizar para funcionar com Schema.org
 						if(adjacentURI.contains("dbpedia")){
 							String[] res = adjacentURI.split("superclass = <");
 							res = res[1].split(">");
@@ -874,6 +875,7 @@ public class KGNodeDAO {
 			resource = dao.getByURI(uri);
 
 			String type = "";
+			//TODO parametrizar para funcionar com Schema.org
 			if(uri.contains("dbpedia.org/ontology") || uri.contains(KGNode.URL_ROOT)){
 				type = KGNode.NODE_TYPE_CLASS;
 			}else if(uri.contains("dbpedia.org/resource")){

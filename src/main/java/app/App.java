@@ -24,8 +24,16 @@ public class App {
 	private static final File outputPath = new File(APP_ROOT,"output");
 
 	public static void main(String[] args) {
+		
 		KGNodeDAO dao = new KGNodeDAO();
 		TweetDAO tDAO = new TweetDAO();
+		
+		/*
+		for(int i = 1000; i<(1000*100); i*=10){
+			generateSyntheticData(i);
+			double executionTime = runQueries(i);
+		}
+		*/
 		
 		dao.deleteAll();
 		tDAO.deleteAll();
@@ -91,6 +99,21 @@ public class App {
 		//semanticDataCubeExecutor.execute(); //build the DW
 		 * 
 		 */
+	}
+
+
+	private static void generateSyntheticData(int growthFactor) {
+		// TODO gerar a quantidade de registros * growthFactor
+		
+		//Salvar numa nova tabela (KGNODE_GROWTHFACTOR)
+		
+	}
+	private static double runQueries(int growthFactor) {
+		double executionTime = 0;
+		// TODO Executar as consultas nas tabelas KGNODE_GROWTHFACTOR
+		
+		//Retornar o tempos de execução total
+ 		return executionTime;
 	}
 
 	private static void testGenerateHierarchies(ArrayList<Integer> rootIds) {
@@ -339,6 +362,5 @@ public class App {
         String res = bridges.get(n2);
         System.out.println("Class GRO: " + res);
 		 */
-
 	}
 }
