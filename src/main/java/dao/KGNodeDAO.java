@@ -69,6 +69,22 @@ public class KGNodeDAO {
 		return superclassId;
 	}
 
+	public void insertNodeTweet(int nodeId, int tweetId) {
+		String sql = "INSERT INTO KGNODE_TWEET (IDNODE, IDTWEET) VALUES (?, ?)";
+		this.getConnection();
+		try {
+			PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			stmt.setInt(1, nodeId);
+			stmt.setInt(2, tweetId);
+			stmt.executeUpdate();
+			stmt.close();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		} finally {
+			ConnectionFactory.closeConnection(this.connection);
+		}
+	}
+
 	public int insertType(int nodeInstanceId, KGNode nodeClassType) {
 		String sql = "INSERT INTO KGNODE_TYPE (IDNODE, IDTYPE) VALUES (?, ?)";
 		Integer classTypeId = null;
@@ -105,7 +121,7 @@ public class KGNodeDAO {
 			return -1;
 		}else{
 			int idBridge = this.getIdBridgeByIdNode(node.getId());
-			
+
 			String sql;
 			if(idBridge > 0){
 				sql = " UPDATE BRIDGE SET IDNODE = ?, HIGH_LEVEL_CLASS = ?, TYPE = ? ";
@@ -120,7 +136,7 @@ public class KGNodeDAO {
 				stmt.setInt(1, node.getId());
 				stmt.setString(2, highLevelClass);
 				stmt.setString(3, type);
-				
+
 				if(idBridge > 0){
 					stmt.setInt(4, idBridge);
 				}
@@ -141,7 +157,7 @@ public class KGNodeDAO {
 	}
 
 	private int getIdBridgeByIdNode(int nodeId) {
-		
+
 		int bridgeId = -1;
 		String sql = " SELECT B.ID FROM BRIDGE B WHERE B.IDNODE = ? ";
 		this.getConnection();
@@ -253,6 +269,25 @@ public class KGNodeDAO {
 		return newId;
 	}
 
+	public void insertQueryExecutionTime(String daoMethod, double time, int growthFactor) {
+		this.getConnection();
+		String sql = "INSERT INTO QUERY_EXECUTION_TIME (daoMethodName, timeMilisseconds, growth_factor) VALUES (?, ?, ?)";
+		try {
+			PreparedStatement stmt = connection.prepareStatement(sql);
+			stmt.setString(1, daoMethod);
+			stmt.setDouble(2, time);
+			stmt.setInt(3, growthFactor);
+			stmt.executeUpdate();
+
+			stmt.close();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		} finally {
+			ConnectionFactory.closeConnection(this.connection);
+		}
+	}
+
+
 	private void update(KGNode node) {
 		this.getConnection();
 		String sql = " UPDATE KGNode SET DIRECTHITS = ?, INDIRECTHITSTYPE = ?, INDIRECTHITSSUBCLASSOF = ? ";
@@ -353,7 +388,8 @@ public class KGNodeDAO {
 			node.setDirectHits(rs.getInt("directHits"));
 			node.setIndirectHitsType(rs.getInt("indirectHitsType"));
 			node.setIndirectHitsSubclassOf(rs.getInt("indirectHitsSubclassOf"));
-			
+			node.setNodeType("type");
+
 			//Bridges
 			node.setBridgeType(rs.getString("bridgeType"));
 		} catch (SQLException e) {
@@ -441,12 +477,12 @@ public class KGNodeDAO {
 		if(initialNode == actualNode){
 			map = new HashMap<>();
 		}
-		
+
 		this.addOnSubclassLevel(map, actualNode, actualLevel);
-		
+
 		System.out.println("Get subclasses from: " + actualNode.toString());
 		ArrayList<KGNode> subclassesFromLevel = this.getDirectSubclassesFromNode(actualNode.getId(), conn);
-		
+
 		if(subclassesFromLevel != null && !subclassesFromLevel.isEmpty()){
 			int nextLevel = actualLevel + 1;
 			for(KGNode subclassNodeFromLevel: subclassesFromLevel){
@@ -457,9 +493,9 @@ public class KGNodeDAO {
 
 		return map;
 	}
-	
+
 	private void addOnSubclassLevel(HashMap<Integer, ArrayList<KGNode>> map, KGNode node, int level) {
-		
+
 		//TODO TESTAR, tem ERRO!!
 		if(map.containsKey(level)){
 			ArrayList<KGNode> classes = map.get(level);
@@ -517,7 +553,7 @@ public class KGNodeDAO {
 		}
 
 	}
-	
+
 	private HashMap<Integer, ArrayList<KGNode>> getHierarchyFromTable(KGNode nodeRoot) {
 		HashMap<Integer, ArrayList<KGNode>> hierarchy = new HashMap<>();
 
@@ -645,7 +681,7 @@ public class KGNodeDAO {
 			}
 		}
 	}
-	
+
 	public ArrayList<KGNode> getInstancesByTypeId(Integer typeId, Connection conn) {
 		this.getConnection();
 
@@ -703,7 +739,7 @@ public class KGNodeDAO {
 		if(conn == null){
 			this.getConnection();
 		}
-		
+
 		//TODO testar
 		ArrayList<KGNode> superclasses = new ArrayList<>();
 		String sql = "SELECT s.idsuperclass from kgnode_superclass s where s.idnode = ?";
@@ -727,9 +763,9 @@ public class KGNodeDAO {
 			ConnectionFactory.closeConnection(this.connection);
 		}
 	}
-	
+
 	public ArrayList<KGNode> getDirectSubclassesFromNode(Integer nodeId, Connection conn) {
-		
+
 		if(conn == null){
 			this.getConnection();
 		}
@@ -749,13 +785,13 @@ public class KGNodeDAO {
 			}
 
 			stmt.close();
-			
+
 			String msg = "Subclasses from " + this.getById(nodeId, conn).toString() + ": ";
 			for(KGNode sub: subclasses){
 				msg += "," + sub.toString();
 			}
 			System.out.println(msg);
-			
+
 			return subclasses;
 		} catch (SQLException e) {
 			return null;

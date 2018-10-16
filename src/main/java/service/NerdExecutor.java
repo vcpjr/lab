@@ -81,7 +81,10 @@ public class NerdExecutor {
 				annotated.getResources().forEach(resource -> {
 					String uri = resource.getURI();
 					KGNode nodeInstance = dao.getKGNode(uri, KGNode.RELATIONSHIP_INSTANCE, 1);
-
+					
+					//Associa a Recurso (KGNode) anotado ao tweet original
+					dao.insertNodeTweet(nodeInstance.getId(), t.getId().intValue());
+					
 					if(nodeInstance != null){
 						int directHitsOnInstance = nodeInstance.getDirectHits();
 
