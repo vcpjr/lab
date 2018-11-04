@@ -23,6 +23,13 @@ import org.slf4j.LoggerFactory;
 import dao.TweetDAO;
 import pojo.Tweet;
 
+/**
+ * Reads the tweets from a dataset and saves on DB.
+ * 
+ * @author Vilmar César Pereira Júnior
+ * 		   Willian Santos de Souza
+ * 
+ */
 public class TweetFileReader {
 	private static final Logger LOG = LoggerFactory.getLogger(TweetFileReader.class);
 	private static XSSFWorkbook xssfWorkbook;
@@ -38,22 +45,19 @@ public class TweetFileReader {
 
 			tweets = new ArrayList<>();
 
-			//TODO dataset do Fábio Bif só tem os textos -> Ids gerados manualmente
-			//Long id, Long userId, String text, Date creationDate, boolean isRetweet
+			//TODO FIXME dataset BR-2015 só tem os textos -> Ids gerados manualmente
 			long idTweet = 1;		
 			long idUser = 1;
 
 			while (br.ready()) {
-				//TODO alterar aqui para pegar os demais campos do tweet (lendo do JSON)
-				//tweets.add(JsonConverter.toTweet(normalize(br.readLine())));
 				String text = br.readLine();
 				boolean isRT = (text != null) && (text.contains("RT"));
 
 				//Ou usar a linha seguinte caso vá ler o .txt com apenas o tweet em si (dataset_Fabio_bif)
 				Tweet t = new Tweet(idTweet++, idUser++, text, new Date(), isRT);
-				
+
 				LOG.info("Reading tweet: '" + t.toString());
-				
+
 				tweets.add(t);
 				dao.insert(t);
 			}
@@ -122,8 +126,6 @@ public class TweetFileReader {
 	}
 
 	private static Date getFormattedDate(String string) {
-		//2017-02-28 21:46:23 +0100 CET
-		//TODO como tratar esse fuso horário CET?
 		SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-DD HH:mm:ss");
 		Date d = null;
 		try {
@@ -146,7 +148,6 @@ public class TweetFileReader {
 	}
 
 	private static String normalize(String text) {
-		//TODO incluir mais caracteres?
 		return text.replace("|", ";").trim();
 	}
 }

@@ -16,17 +16,27 @@ import org.slf4j.LoggerFactory;
 import pojo.dbpediaspotlight.Annotation;
 import util.JsonConverter;
 
-class SpotlightRest {
+/**
+ * Call DBpedia Spotlight (local or remote) for annotate TCs (e.g., tweets).
+ * 
+ * DBpedia spotlight can be run locally on Docker: https://github.com/dbpedia-spotlight/spotlight-docker
+ * 
+ * @author Vilmar César Pereira Júnior
+ * 	       Willian Santos de Souza
+ *
+ */
+public class SpotlightRest {
     private static final Logger LOG = LoggerFactory.getLogger(SpotlightRest.class);
-
-    //Spotlight instalado via docker
-    //https://github.com/dbpedia-spotlight/spotlight-docker
-    private static String PROTOCOL = "http";
+    
+    //LOCAL SPOTLIGHT (DOCKER)
     private static String HOST = "localhost:2228/rest";
+
+    //REMOTE SPOTLIGHT (DOCKER)
+    //private static String HOST = "model.dbpedia-spotlight.org";
+    
+    private static String PROTOCOL = "http";
     private static String ANNOTATE_PATH = "/annotate";
- 
-   // private static String HOST = "model.dbpedia-spotlight.org";
-//    private static String ANNOTATE_PATH = "/annotate";
+
 
     private Annotation httpHandle(HttpURLConnection conn) throws IOException, UnexpectedStatusCodeException {
         if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -63,8 +73,6 @@ class SpotlightRest {
     Annotation getAnnotation(String text, float confidence, String language)
         throws UnexpectedStatusCodeException {
 
-    	
-    	
         String path = ANNOTATE_PATH.replace("{language}", language);
         HttpURLConnection conn = null;
         Annotation annotation = null;
@@ -83,7 +91,6 @@ class SpotlightRest {
             conn.setRequestProperty("Accept", "application/json");
             conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded"); 
             conn.setDoOutput(true);
-//            conn.
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
             String encodedText = URLEncoder.encode(text, "UTF-8");

@@ -15,29 +15,46 @@ import org.slf4j.LoggerFactory;
 import dao.KGNodeDAO;
 import dao.TweetDAO;
 import pojo.KGNode;
+import pojo.Tweet;
+import service.BridgeExecutor;
 import service.NerdExecutor;
 import util.CSVReport;
 
+/**
+ * The main application, containing 2 of 3 steps from the proposal
+ * 
+ * 1 - Semantic enrichment and accounting
+ * 	- Annotation of textual clips (tweets) with DBpedia Spotlight
+ *  - Construction of a hierarchy of hit resources (ranking with de most mentioned DBpedia resources)
+ * 
+ * 2 - Semantic Data Cube Construction
+ *  - Manual Key Brigdes construction (from domain experts)
+ *  - Algorithm for checking and completion of the bridges
+ * 
+ * 
+ * @author Vilmar César Pereira Júnior
+ *
+ */
 public class App {
 	private static final Logger LOG = LoggerFactory.getLogger(App.class);
 	private static final String APP_ROOT = System.getProperty("user.dir");
 	private static final File outputPath = new File(APP_ROOT,"output");
+	private static ArrayList<Integer> rootIds = new ArrayList<>();
+
+
 
 	public static void main(String[] args) {
-		
+
+		//TODO Future experiment to verify the impact of larger datasets and databases
+		//runPerformanceTests();
+
 		KGNodeDAO dao = new KGNodeDAO();
 		TweetDAO tDAO = new TweetDAO();
-		
-		/*
-		for(int i = 1000; i<(1000*100); i*=10){
-			generateSyntheticData(i);
-			double executionTime = runQueries(i);
-		}
-		*/
-		
+
+		//Be careful! Each new execution deletes all registers!
 		dao.deleteAll();
 		tDAO.deleteAll();
-		
+
 		if (args.length < 3) {
 			System.err.println("Parameters not found. For run this application use follow command.");
 			System.out.println("./run.sh <dataset> <confidence_level> <language>\n");
@@ -56,21 +73,48 @@ public class App {
 			System.exit(1);
 		}
 
-		//STEP 1: SEMANTIC ENRICHMENT AND ACCOUNTING
+		LOG.info("***** STEP 1: SEMANTIC ENRICHMENT AND ACCOUNTING");
 		NerdExecutor nerdExecutor = new NerdExecutor(inputFile);
 		nerdExecutor.execute(confidence, language);
+		 
 		
-		/*
-		//STEP 2: SEMANTIC DATA CUBE CONSTRUCTION
+		LOG.info("***** STEP 2: SEMANTIC DATA CUBE CONSTRUCTION");
 		dao.deleteAllBridges();
 		createKeyBridges();
 
 		BridgeExecutor bridgeService = new BridgeExecutor();
 		bridgeService.execute();
 
-		//testGenerateRDF();
+		testGenerateRDF();
+		
 		/*
-		ArrayList<Integer> rootIds = new ArrayList<>();
+		rootIds.add(15280); //
+		rootIds.add(14524); //
+		rootIds.add(14383); //
+		rootIds.add(14449); //
+		rootIds.add(14385);
+
+		KGNodeDAO dao = new KGNodeDAO();
+		dao.deleteAllHierarchies();
+		testGenerateHierarchies(rootIds);
+		/*
+
+
+		/*
+		//TODO Future work -> create the final step 3: OLAP ANALYSIS
+		//SemanticDataCubeExecutor semanticDataCubeExecutor = new SemanticDataCubeExecutor(hierarchyFile);
+		//semanticDataCubeExecutor.execute(); //build the DW
+		 * 
+		 */
+	}
+
+
+	
+	private static void runPerformanceTests() {
+		generateSyntheticData(10);
+		runQueryListAllNodes(10);
+
+		/*
 		rootIds.add(14412); //Organization
 		rootIds.add(14395); //
 		rootIds.add(14392); //
@@ -83,37 +127,91 @@ public class App {
 		rootIds.add(14449); //
 		rootIds.add(14385);
 
-		KGNodeDAO dao = new KGNodeDAO();
-		dao.deleteAllHierarchies();
-		testGenerateHierarchies(rootIds);
-		/*
-
-		//TODO desenhar os caminhos -> Ver APIs para isso
-		//http://graphstream-project.org/
-		//http://jgrapht.org/
-		//http://bfo.com/download/
-
-		/*
-		//TODO create the final step
-		//SemanticDataCubeExecutor semanticDataCubeExecutor = new SemanticDataCubeExecutor(hierarchyFile);
-		//semanticDataCubeExecutor.execute(); //build the DW
-		 * 
-		 */
+		for(int i = 1000; i<(1000*100); i*=10){
+			generateSyntheticData(i);
+			runQueryGenerateHierarchies(i);
+			runQueryListAllNodes(i);
+		}
+		*/
+		
 	}
 
 
 	private static void generateSyntheticData(int growthFactor) {
+		KGNodeDAO dao = new KGNodeDAO();
+		TweetDAO tDAO = new TweetDAO();
+
+		List<KGNode> nodes = dao.list();
+		int amountOfNewRegisters = nodes.size() * growthFactor;
+		
 		// TODO gerar a quantidade de registros * growthFactor
-		
-		//Salvar numa nova tabela (KGNODE_GROWTHFACTOR)
-		
+		for(int i = 0; i< amountOfNewRegisters; i++){
+			KGNode node = nodes.get((int) (Math.random() * nodes.size()));
+			KGNode newNode = new KGNode((node.getUri() + "#GROWTH_FACTOR=" + growthFactor), node.getNodeType());
+			newNode.setDirectHits(node.getDirectHits());
+			newNode.setIndirectHitsSubclassOf(node.getIndirectHitsSubclassOf());
+			newNode.setIndirectHitsType(node.getIndirectHitsType());
+			newNode.setId(null);
+			
+			dao.insert(newNode);
+		}
+
+		List<Tweet> tweets = tDAO.list();
+		int amountOfTweets = tweets.size() * growthFactor;
+		for(int i = 0; i< amountOfTweets; i++){
+			Tweet tweet = tweets.get((int) (Math.random() * tweets.size()));
+			Tweet newTweet = new Tweet(tweet.getId(), tweet.getUserId(), tweet.getText(), tweet.getCreationDate(), tweet.isRetweet());
+			tDAO.insert(newTweet);
+		}
 	}
-	private static double runQueries(int growthFactor) {
+	
+	
+	private static double runQueryListAllNodes(int growthFactor) {
 		double executionTime = 0;
+		KGNodeDAO dao = new KGNodeDAO();
 		// TODO Executar as consultas nas tabelas KGNODE_GROWTHFACTOR
-		
-		//Retornar o tempos de execução total
- 		return executionTime;
+
+		long start = System.nanoTime();
+		dao.list();
+		long end = System.nanoTime();
+		long elapsed = (end - start)/1000000;
+		System.out.println((System.currentTimeMillis() + ": " + "sendOne.executeQuery(): " + elapsed + " milis\n"));
+
+		dao.insertQueryExecutionTime("KGNodeDAO.list()", elapsed, growthFactor);
+
+		return executionTime;
+	}
+
+	private static double runQueryGenerateHierarchies(int growthFactor) {
+		double executionTime = 0;
+		KGNodeDAO dao = new KGNodeDAO();
+		// TODO Executar as consultas nas tabelas KGNODE_GROWTHFACTOR
+
+		long start = System.nanoTime();
+		testGenerateHierarchies(rootIds);
+		long end = System.nanoTime();
+		long elapsed = (end - start)/1000000;
+		System.out.println((System.currentTimeMillis() + ": " + "sendOne.executeQuery(): " + elapsed + " milis\n"));
+
+		dao.insertQueryExecutionTime("generateHierarchies()", elapsed, growthFactor);
+
+		return executionTime;
+	}
+	
+	private static double runQuerySuperclassesPath(int growthFactor) {
+		double executionTime = 0;
+		KGNodeDAO dao = new KGNodeDAO();
+		// TODO Executar as consultas nas tabelas KGNODE_GROWTHFACTOR
+
+		long start = System.nanoTime();
+		dao.list();
+		long end = System.nanoTime();
+		long elapsed = (end - start)/1000000;
+		System.out.println((System.currentTimeMillis() + ": " + "sendOne.executeQuery(): " + elapsed + " milis\n"));
+
+		dao.insertQueryExecutionTime("superclassesPath()", elapsed, growthFactor);
+
+		return executionTime;
 	}
 
 	private static void testGenerateHierarchies(ArrayList<Integer> rootIds) {
@@ -164,11 +262,6 @@ public class App {
 		ArrayList<Integer> visitedTypeIds = new ArrayList<>();
 		ArrayList<Integer> generatedIdsLabels = new ArrayList<>();
 
-		//Figuras e destacar as pontes
-		//1 - com a raiz
-		//2 - Organisation
-		//3- BusinessEnty
-
 		Connection conn = dao.getConnection();
 		for(KGNode instance: instances){
 			ArrayList<KGNode> types = dao.getTypesByInstanceId(instance.getId(), conn);
@@ -178,7 +271,7 @@ public class App {
 				if(!visitedTypeIds.contains(type.getId())){
 					System.out.println("Visiting Type: " + type.toString());
 
-					//TODO owl:Thing está repetido
+					//TODO FIXME owl:Thing está repetido
 					visitedTypeIds.add(type.getId());
 					rdf += dao.createLabel(type) + "\n";
 					generatedIdsLabels.add(type.getId());
@@ -216,7 +309,7 @@ public class App {
 	}
 
 	private static void createKeyBridges() {
-		//TODO ler de arquivo??
+		//TODO ler de arquivo futuramente
 		KGNodeDAO dao = new KGNodeDAO();
 
 		dao.insertBridge(KGNode.getDBpediaClassURI("DBpedia:SportsTeam"),"gr:BusinessEntity", KGNode.BRIDGE_TYPE_KEY);
@@ -332,7 +425,7 @@ public class App {
 		return list.stream().filter(o -> o.getLabel().equals(label)).findFirst().isPresent();
 	}
 
-	private static void test() {
+	private static void printHierarchies() {
 
 		//		System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 		//		KGNodeDAO dao = new KGNodeDAO();

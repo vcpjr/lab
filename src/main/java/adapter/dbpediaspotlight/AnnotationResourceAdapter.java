@@ -1,18 +1,41 @@
 package adapter.dbpediaspotlight;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import pojo.dbpediaspotlight.AnnotationResource;
-
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+
+import pojo.dbpediaspotlight.AnnotationResource;
+
+/**
+ * Converts a JSON from Annotation, getting the annotated types from a resource.
+ *  
+ * Example:
+ * {@code
+ *      {
+ * 			"@URI": "http://pt.dbpedia.org/resource/Twitter",
+ *			"@support": "3432",
+ *		    "@types": "Wikidata:Q386724,Schema:WebPage,Schema:CreativeWork,DBpedia:Work,DBpedia:Website",
+ *			"@surfaceForm": "Twitter",
+ *			"@offset": "50",
+ *			"@similarityScore": "0.999999131483755",
+ *			"@percentageOfSecondRank": "0.0"
+ *		}
+ *	}
+ * 
+ * Resultant AnnotationResource is the DBpedia LOD Resource "Twitter" containing 5 types (Wikidata:Q386724,Schema:WebPage,
+ * Schema:CreativeWork,DBpedia:Work,DBpedia:Website)
+ * 
+ * @author Wilian Santos de Souza
+ *
+ */
 public class AnnotationResourceAdapter implements JsonDeserializer<AnnotationResource> {
 
     @Override

@@ -1,0 +1,36 @@
+{
+	"@text": "Teste do Brasil, mais uma vez falo do Brasil pelo Twitter",
+	"@confidence": "0.35",
+	"@support": "0",
+	"@types": "",
+	"@sparql": "",
+	"@policy": "whitelist",
+	"Resources": [
+		{
+			"@URI": "http://pt.dbpedia.org/resource/Brasil",
+			"@support": "193240",
+			"@types": "",
+			"@surfaceForm": "Brasil",
+			"@offset": "9",
+			"@similarityScore": "0.9998932906622119",
+			"@percentageOfSecondRank": "9.510450257451562E-5"
+		},
+		{
+			"@URI": "http://pt.dbpedia.org/resource/Brasil",
+			"@support": "193240",
+			"@types": "",
+			"@surfaceForm": "Brasil",
+			"@offset": "38",
+			"@similarityScore": "0.9998932906622119",
+			"@percentageOfSecondRank": "9.510450257451562E-5"
+		},
+		{
+			"@URI": "http://pt.dbpedia.org/resource/Twitter",
+			"@support": "3432",
+			"@types": "Wikidata:Q386724,Schema:WebPage,Schema:CreativeWork,DBpedia:Work,DBpedia:Website",
+			"@surfaceForm": "Twitter",
+			"@offset": "50",
+			"@similarityScore": "0.999999131483755",
+			"@percentageOfSecondRank": "0.0"
+		}
+	][{"@URI":"http://pt.dbpedia.org/resource/Brasil","@support":"193240","@types":"","@surfaceForm":"Brasil","@offset":"9","@similarityScore":"0.9998932906622119","@percentageOfSecondRank":"9.510450257451562E-5"},{"@URI":"http://pt.dbpedia.org/resource/Brasil","@support":"193240","@types":"","@surfaceForm":"Brasil","@offset":"38","@similarityScore":"0.9998932906622119","@percentageOfSecondRank":"9.510450257451562E-5"},{"@URI":"http://pt.dbpedia.org/resource/Twitter","@support":"3432","@types":"Wikidata:Q386724,Schema:WebPage,Schema:CreativeWork,DBpedia:Work,DBpedia:Website","@surfaceForm":"Twitter","@offset":"50","@similarityScore":"0.999999131483755","@percentageOfSecondRank":"0.0"}]

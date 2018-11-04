@@ -1,12 +1,14 @@
 package pojo.dbpediaspotlight;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.util.List;
+
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Object class representing annotation
  * returned from DBPediaSpotlight requests
+ * 
+ * @author Willian Santos de Souza
  */
 public class Annotation {
 

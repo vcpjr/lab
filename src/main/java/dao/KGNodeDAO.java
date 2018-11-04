@@ -16,6 +16,9 @@ import org.apache.jena.query.QueryFactory;
 
 import pojo.KGNode;
 
+/**
+ * @author Vilmar César Pereira Júnior
+ */
 public class KGNodeDAO {
 
 	private Connection connection;
@@ -32,7 +35,7 @@ public class KGNodeDAO {
 	}
 
 	public String createLabel(KGNode source){
-		//<http://dbpedia.org/ontology/MusicalArtist>	<http://www.w3.org/2000/01/rdf-schema#label>	"musicien"@fr .
+		//Example: <http://dbpedia.org/ontology/MusicalArtist>	<http://www.w3.org/2000/01/rdf-schema#label>	"musicien"@fr .
 
 		String ret = "";
 		ret = "<" + source.getUri() + "> <" + KGNode.LABEL_URI   + "> " + '"' + source.toString() + '"' + " .";
@@ -496,7 +499,7 @@ public class KGNodeDAO {
 
 	private void addOnSubclassLevel(HashMap<Integer, ArrayList<KGNode>> map, KGNode node, int level) {
 
-		//TODO TESTAR, tem ERRO!!
+		//TODO FIXME
 		if(map.containsKey(level)){
 			ArrayList<KGNode> classes = map.get(level);
 			if(!containsLabel(classes, node.getLabel())){
@@ -587,8 +590,6 @@ public class KGNodeDAO {
 		return hierarchy;
 	}
 
-
-
 	private void insertNodeOnHierarchy(KGNode node, int level, KGNode nodeRoot) {
 		String sql = "INSERT INTO HIERARCHY (IDROOT, IDNODE, LEVEL) VALUES (?, ?, ?)";
 
@@ -608,7 +609,6 @@ public class KGNodeDAO {
 	}
 
 	public ArrayList<KGNode> getSuperclassesPath(Integer idClassWithTypeRelationship, Connection conn) {
-		//Não abre nem fecha conexão, pois é recursivo
 		ArrayList<KGNode> path = new ArrayList<>();
 		String sql;
 		sql = "SELECT P.CSV_IDNODES_PATH_TO_THING FROM SUPERCLASSES_PATH P WHERE P.IDNODE_CLASS_TYPE_RELATIONSHIP = ?";
@@ -740,7 +740,6 @@ public class KGNodeDAO {
 			this.getConnection();
 		}
 
-		//TODO testar
 		ArrayList<KGNode> superclasses = new ArrayList<>();
 		String sql = "SELECT s.idsuperclass from kgnode_superclass s where s.idnode = ?";
 		try {
@@ -765,11 +764,9 @@ public class KGNodeDAO {
 	}
 
 	public ArrayList<KGNode> getDirectSubclassesFromNode(Integer nodeId, Connection conn) {
-
 		if(conn == null){
 			this.getConnection();
 		}
-		//TODO testar
 		String sql = "SELECT S.IDNODE FROM KGNODE_SUPERCLASS S WHERE S.IDSUPERCLASS = ?";
 		ArrayList<KGNode> subclasses = new ArrayList<>();
 		try {
@@ -870,7 +867,6 @@ public class KGNodeDAO {
 						adjacentURI = KGNode.URL_ROOT;
 						addSuperclass = true;
 					}
-					//Pode ser que a classe já exista
 					KGNode superclass = getKGNode(adjacentURI, KGNode.RELATIONSHIP_SUBCLASS_OF, nodeClassType.getIndirectHitsType());
 					if(superclass != null &&!containsLabel(superclasses, superclass.getLabel()) && addSuperclass){
 						superclasses.add(superclass);
@@ -1042,6 +1038,5 @@ public class KGNodeDAO {
 		} catch (SQLException e) {
 		}
 		this.closeConnection();
-
 	}
 }

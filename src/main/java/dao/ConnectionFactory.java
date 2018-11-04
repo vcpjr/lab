@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
+ * A simple JDBC connection factory class.
+ * 
  * @author Vilmar C. Pereira Júnior
  */
 public class ConnectionFactory {

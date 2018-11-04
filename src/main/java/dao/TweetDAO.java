@@ -11,6 +11,10 @@ import java.util.List;
 import pojo.KGNode;
 import pojo.Tweet;
 
+/**
+ *
+ * @author Vilmar César Pereira Júnior
+ */
 public class TweetDAO {
 
 	private Connection connection;

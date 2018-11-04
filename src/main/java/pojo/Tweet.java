@@ -5,6 +5,13 @@ import java.util.Date;
 
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * Represents a Tweet.
+ * 
+ * TODO create in the next versions a superclass TextualCLip to make a most generic mapping
+ *
+ * @author Vilmar César Pereira Júnior
+ */
 public class Tweet {
 
 	@SerializedName("id")

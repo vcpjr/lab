@@ -3,12 +3,8 @@ package adapter.dbpediaspotlight;
 import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.TimeZone;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -17,6 +13,12 @@ import com.google.gson.JsonParseException;
 
 import pojo.Tweet;
 
+/**
+ * Converts a JSON from a Tweet
+ * 
+ * @author Vilmar César Pereira Júnior
+ *
+ */
 public class TweetAdapter implements JsonDeserializer<Tweet> {
 
 	@Override

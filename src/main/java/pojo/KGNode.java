@@ -3,7 +3,7 @@ package pojo;
 /**
  * 
  * Represents a Knowledge Graph Node (i.g., a class or instance on DBpedia)
- * @author vilmar
+ * @author Vilmar César Pereira Júnior
  *
  */
 public class KGNode {

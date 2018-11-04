@@ -19,6 +19,13 @@ import pojo.dbpediaspotlight.Annotation;
 import util.CSVReport;
 import util.TweetFileReader;
 
+/**
+ * Executes the STEP 1: SEMANTIC ANNOTATION AND ACCOUNTING
+ * 
+ * @author Vilmar César Pereira Júnior
+ * 		   Willian Santos de Souza
+ */
+
 public class NerdExecutor {
 
 	private static final String APP_ROOT = System.getProperty("user.dir");
@@ -31,10 +38,13 @@ public class NerdExecutor {
 
 	public NerdExecutor(File datasetFile) {
 		rest = new SpotlightRest();
-		
-		//TODO criar método para ler de JSON
+
+		//TODO create a methot to read from JSON files
 		tweets = TweetFileReader.readTweetsFromTxtFile(datasetFile);
+		
+		//Another dataset ;)
 		//tweets = TweetFileReader.readTweetsFromPepsiDatasetFile(datasetFile);
+		
 		String filePath = datasetFile.getName();
 		inputFilename = filePath.split("\\.")[0];
 	}
@@ -48,30 +58,6 @@ public class NerdExecutor {
 	}
 
 	public void execute(float confidence, String language) {
-		//TODO alterar para incluir: 
-		//Alterar para gerar uma planilha só
-		//tweet id (id), user id, text, pre-processed text, confidence, mention, URI, Chosen class, Request time
-
-		//TODO confirmar a contagem de HITS (criar KGNode? Salvar no banco?)
-		//Diretos: menções a instâncias
-		//Indiretos por Type: uma classe diretamente relacionada à uma instância
-		//Indiretos por Subclass-Of: uma classe é relacionada através de uma relação de subsumption até uma classe type de uma instância
-
-		/*
-		 * Exemplo: 
-		 * 
-		 * Resource(directHits, indirectHitsType, indirectHitsSubclassOf)
-		 * 			
-		 *    	 Thing(0,0,2)
-		 *	       |
-		 *	     Person(0,0,2)
-		 *	       |
-		 *	     Singer(0,2,0)
-		 *    	/             \
-		 * Selena(1,0,0)	 Anitta(1,0,0)			   
-		 * 
-		 * */
-
 		KGNodeDAO dao = new KGNodeDAO();
 		ArrayList<Integer> annotatedInstanceIds = new ArrayList<>();
 		for(int i = 0; i < tweets.size(); ++i) {
@@ -81,10 +67,10 @@ public class NerdExecutor {
 				annotated.getResources().forEach(resource -> {
 					String uri = resource.getURI();
 					KGNode nodeInstance = dao.getKGNode(uri, KGNode.RELATIONSHIP_INSTANCE, 1);
-					
+
 					//Associa a Recurso (KGNode) anotado ao tweet original
 					dao.insertNodeTweet(nodeInstance.getId(), t.getId().intValue());
-					
+
 					if(nodeInstance != null){
 						int directHitsOnInstance = nodeInstance.getDirectHits();
 
